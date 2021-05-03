@@ -1,10 +1,10 @@
 
-import sqlalchemy
 import pandas as pd
 import model
 
-
-## import datasets from PostgreSQL
+# ========================================
+#             Import Dataset
+# ========================================
 user = 'postgres'
 password = 'Komaeda'
 
@@ -19,15 +19,19 @@ Query = "SELECT * FROM factcheck"
 factcheck = pd.read_sql_query(Query, con=engine)
 
 
+# ========================================
+#                 Main
+# ========================================
+
 def main():
     sample = news_table.sample(n=100).reset_index(drop=True)
 
     text = sample.text.values
     label = sample.label.values
 
-    attention_masks, input_ids = model.vectorize(text)
+    attention_masks, input_ids = model.vectorize(text) # tokenization + vectorization
 
-    model.train(attention_masks, input_ids,label)
+    model.train(attention_masks, input_ids,label) # train modle
 
 
 if __name__ == '__main__':

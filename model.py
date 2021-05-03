@@ -12,6 +12,7 @@ import time
 import datetime
 import random
 import numpy as np
+import os
 
 # parameters for training
 from config import *
@@ -83,7 +84,7 @@ def train(attention_masks,input_ids,labels):
         )
 
     # Running the model on GPU.
-    #model.cuda()
+    # model.cuda()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -275,8 +276,14 @@ def train(attention_masks,input_ids,labels):
         print("  Accuracy: {0:.2f}".format(eval_accuracy / nb_eval_steps))
         print("  Validation took: {:}".format(format_time(time.time() - t0)))
 
+<<<<<<< Updated upstream
         if epcoh == checkpoint:
             model.save_weights(save_model)
+=======
+        if epoch % checkpoint == 0:
+            print("Saving checkpoint...")
+            torch.save(model,save_model)
+>>>>>>> Stashed changes
 
     print("")
     print("Training complete!")
