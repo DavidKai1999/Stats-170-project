@@ -1,27 +1,4 @@
 
-
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier,StackingClassifier
-from sklearn import model_selection
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, confusion_matrix, mean_squared_error, mean_absolute_error, r2_score
-
-import sqlalchemy
-import pandas as pd
-
-user = 'postgres'
-password = 'Komaeda'
-
-from sqlalchemy import create_engine
-engine = create_engine('postgresql://'+user+':'+password+'@localhost/news')
-
-Query = "SELECT * FROM redditcomment"
-df = pd.read_sql_query(Query, con=engine)
-print(df)
-
-
-
-
-"""
 X_train, X_test, y_train, y_test = model_selection.train_test_split() # data, label, test_size
 
 print("-------------Run logistic regression---------------")
@@ -53,5 +30,3 @@ from sklearn.naive_bayes import GaussianNB
 nb = GaussianNB()
 nb.fit(X_train,y_train)
 y_predicted_nb = nb.predict(X_test)
-
-"""
