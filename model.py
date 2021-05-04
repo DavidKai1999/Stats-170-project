@@ -261,17 +261,29 @@ def bertpretrain(train_dataloader, validation_dataloader,mode):
     print("Training complete!")
 
 
-def foresttrain(X_train, Y_train):
+
+def foresttrain(X_train, Y_train, model_name):
     '''
     Train the random forest classifier and save to local.
     :param X_train:
     :param Y_train:
     '''
-    forest = RandomForestClassifier(n_estimators=100, n_jobs=n_jobs)
+    forest = RandomForestClassifier(n_estimators=10, n_jobs=3) #n_job is n of CPU cores assigned
     forest.fit(X_train, Y_train)
-    dump(forest, 'forest.joblib')
+    dump(forest, model_name)
 
-def nbtrain(X_train, Y_train):
+def forest_predict(X_val, model_name):
+    '''
+    comparing the return result with the Y_val
+    e.g.
+    from sklearn.metrics import accuracy_score
+    accuracy_score(Y_val, forest_prediction)
+    '''
+    forest = load(model_name)
+    forest_prediction = forest.predict(X_val)
+    return forest_prediction
+
+def nbtrain(X_train, Y_train, model_name):
     '''
     Train the Naive Bayes classifer and save to local.
     :param X_train:
@@ -279,8 +291,14 @@ def nbtrain(X_train, Y_train):
     :return:
     '''
     nb = GaussianNB()
-    forest.fit(X_train, Y_train)
-    dump(forest, 'nb.joblib')
+    nb.fit(X_train, Y_train)
+    dump(nb, model_name)
+
+def nb_predict(X_val, model_name):
+    '''comparing the return result with the Y_val'''
+    nb = load(model_name)
+    nb_prediction = nb.predict(X_val)
+    return nb_prediction
 
 def format_time(elapsed):
     '''
