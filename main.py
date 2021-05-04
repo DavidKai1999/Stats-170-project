@@ -62,8 +62,22 @@ def main():
 
     # train other model (random forest / SVM / Naive Bayes/ ... )
 
-    # nbtrain(X_train, Y_train)
-    # foresttrain(X_train, Y_train)
+    # config model name 可以跑但是反辣
+
+    forest_model_name = 'forest.joblib'
+    nb_model_name = 'nb.joblib'
+
+    # generate model file
+    foresttrain(X_train, X_val, forest_model_name)
+    nbtrain(X_train, X_val, nb_model_name)
+
+    # load_model
+    forest_prediction = forest_predict(Y_train, forest_model_name)
+    nb_prediction = nb_predict(Y_train, nb_model_name)
+    
+    # applying evaluation metrics
+    from sklearn.metrics import accuracy_score
+    print('forest accuracy',accuracy_score(Y_val, forest_prediction))
 
 
 
