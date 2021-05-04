@@ -24,7 +24,7 @@ factcheck = pd.read_sql_query(Query, con=engine)
 
 def main():
     redditnews = news_table
-    sample = redditnews.sample(n=50,random_state=1)
+    sample = redditnews.sample(n=100,random_state=1)
 
     redditcomment = comment_table
 
@@ -64,6 +64,12 @@ def main():
 
     # nbtrain(X_train, Y_train)
     # foresttrain(X_train, Y_train)
+
+
+
+    # ========================================
+    #                 Validation
+    # ========================================
 
 
 if __name__ == '__main__':

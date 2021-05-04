@@ -73,15 +73,27 @@ def vector_to_input(attention_masks,input_ids,labels):
 
 
 def bertpretrain(train_dataloader, validation_dataloader,mode):
-    if Path(mode+save_model).exists():
-        model.load_weights(Path(mode+save_model))
-    else:
-        model = BertForSequenceClassification.from_pretrained(
-            "bert-base-uncased",
-            num_labels=2,
-            output_attentions=False,
-            output_hidden_states=False,
-        )
+    if mode == 'news':
+        if save_news_model.exists():
+            model = torch.load(save_news_model)
+        else:
+            model = BertForSequenceClassification.from_pretrained(
+                "bert-base-uncased",
+                num_labels=n_jobs,
+                output_attentions=False,
+                output_hidden_states=False,
+            )
+
+    elif mode == 'comment':
+        if save_comment_model.exists():
+            model = torch.load(save_comment_model)
+        else:
+            model = BertForSequenceClassification.from_pretrained(
+                "bert-base-uncased",
+                num_labels=n_jobs,
+                output_attentions=False,
+                output_hidden_states=False,
+            )
 
         # Running the model on GPU.
     # model.cuda()
@@ -110,13 +122,13 @@ def bertpretrain(train_dataloader, validation_dataloader,mode):
     loss_values = []
 
     # For each epoch...
-    for epoch_i in range(0, epochs):
+    for epoch in range(0, epochs):
 
         # ========================================
         #               Training
         # ========================================
         print("")
-        print('======== Epoch {:} / {:} ========'.format(epoch_i + 1, epochs))
+        print('======== Epoch {:} / {:} ========'.format(epoch + 1, epochs))
         print('Training...')
 
         # Measure how long the training epoch takes.
@@ -240,7 +252,10 @@ def bertpretrain(train_dataloader, validation_dataloader,mode):
 
         if epoch % checkpoint == 0:
             print("Saving checkpoint...")
-            torch.save(model,Path(mode+save_model))
+            if mode == 'news':
+                torch.save(model,save_news_model)
+            elif mode == 'comment':
+                torch.save(model,save_comment_model)
 
     print("")
     print("Training complete!")
