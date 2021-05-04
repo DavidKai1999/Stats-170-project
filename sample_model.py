@@ -1,8 +1,12 @@
 
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
 X_train, X_test, y_train, y_test = model_selection.train_test_split() # data, label, test_size
 
 print("-------------Run logistic regression---------------")
-logReg = LogisticRegression(n_jobs=3)
+logReg = LogisticRegression(n_jobs=3 )
 logReg.fit(X_train, y_train)
 y_predicted_lr = logReg.predict(X_test)
 print("logistic regression accuracy_score ", accuracy_score(y_test, y_predicted_lr))

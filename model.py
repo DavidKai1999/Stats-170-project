@@ -1,5 +1,6 @@
 
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
@@ -12,7 +13,8 @@ import time
 import datetime
 import random
 import numpy as np
-import os
+from joblib import dump, load
+from pathlib import Path
 
 # parameters for training
 from config import *
@@ -27,15 +29,11 @@ def vectorize(text):
             t,  # Sentence which are encoding.
             add_special_tokens=True,  # Adding special tokens '[CLS]' and '[SEP]'
         )
-
         input_ids.append(encoded_sent)
-
-
 
     input_ids = pad_sequences(input_ids, maxlen=MAX_LEN , truncating="post", padding="post")
 
     attention_masks = []
-
     for sent in input_ids:
         # Generating attention mask for sentences.
         #   - when there is 0 present as token id we are going to set mask as 0.
@@ -46,9 +44,7 @@ def vectorize(text):
 
     return attention_masks, input_ids
 
-
-def train(attention_masks,input_ids,labels):
-
+def vector_to_input(attention_masks,input_ids,labels):
     train_inputs, validation_inputs, train_labels, validation_labels = train_test_split(input_ids, labels,
                                                                                         test_size=0.2)
     train_masks, validation_masks, _, _ = train_test_split(attention_masks, labels, test_size=0.2)
@@ -73,8 +69,12 @@ def train(attention_masks,input_ids,labels):
     validation_sampler = SequentialSampler(validation_data)
     validation_dataloader = DataLoader(validation_data, sampler=validation_sampler, batch_size=batch_size)
 
-    if save_model.exists():
-        model.load_weights(save_model)
+    return train_inputs, train_labels, validation_inputs, validation_labels, train_dataloader, validation_dataloader
+
+
+def bertpretrain(train_dataloader, validation_dataloader,mode):
+    if Path(mode+save_model).exists():
+        model.load_weights(Path(mode+save_model))
     else:
         model = BertForSequenceClassification.from_pretrained(
             "bert-base-uncased",
@@ -83,9 +83,10 @@ def train(attention_masks,input_ids,labels):
             output_hidden_states=False,
         )
 
-    # Running the model on GPU.
+        # Running the model on GPU.
     # model.cuda()
 
+    # Running on GPU if available, otherwise on CPU
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     optimizer = AdamW(model.parameters(),
@@ -93,19 +94,13 @@ def train(attention_masks,input_ids,labels):
                       eps = 1e-8
                       )
 
-
     total_steps = len(train_dataloader) * epochs
 
     scheduler = get_linear_schedule_with_warmup(optimizer,
                                                 num_warmup_steps=0,  # Default value in run_glue.py
                                                 num_training_steps=total_steps)
 
-    # This training code is based on the `run_glue.py` script here:
-    # https://github.com/huggingface/transformers/blob/5bfcd0485ece086ebcbed2d008813037968a9e58/examples/run_glue.py#L128
-
     # Set the seed value all over the place to make this reproducible.
-    seed_val = 42
-
     random.seed(seed_val)
     np.random.seed(seed_val)
     torch.manual_seed(seed_val)
@@ -120,9 +115,6 @@ def train(attention_masks,input_ids,labels):
         # ========================================
         #               Training
         # ========================================
-
-        # Perform one full pass over the training set.
-
         print("")
         print('======== Epoch {:} / {:} ========'.format(epoch_i + 1, epochs))
         print('Training...')
@@ -133,15 +125,10 @@ def train(attention_masks,input_ids,labels):
         # Reset the total loss for this epoch.
         total_loss = 0
 
-        # Put the model into training mode. Don't be mislead--the call to
-        # `train` just changes the *mode*, it doesn't *perform* the training.
-        # `dropout` and `batchnorm` layers behave differently during training
-        # vs. test (source: https://stackoverflow.com/questions/51433378/what-does-model-train-do-in-pytorch)
-        model.train()
+        model.train() # switch to training mode
 
         # For each batch of training data...
         for step, batch in enumerate(train_dataloader):
-
             # Progress update every 40 batches.
             if step % 40 == 0 and not step == 0:
                 # Calculate elapsed time in minutes.
@@ -151,10 +138,6 @@ def train(attention_masks,input_ids,labels):
                 print('  Batch {:>5,}  of  {:>5,}.    Elapsed: {:}.'.format(step, len(train_dataloader), elapsed))
 
             # Unpack this training batch from our dataloader.
-            #
-            # As we unpack the batch, we'll also copy each tensor to the GPU using the
-            # `to` method.
-            #
             # `batch` contains three pytorch tensors:
             #   [0]: input ids
             #   [1]: attention masks
@@ -163,30 +146,20 @@ def train(attention_masks,input_ids,labels):
             b_input_mask = batch[1].to(device)
             b_labels = batch[2].to(device)
 
-            # Always clear any previously calculated gradients before performing a
-            # backward pass. PyTorch doesn't do this automatically because
-            # accumulating the gradients is "convenient while training RNNs".
-            # (source: https://stackoverflow.com/questions/48001598/why-do-we-need-to-call-zero-grad-in-pytorch)
+            # Clear any previously calculated gradients before performing a backward pass.
             model.zero_grad()
 
             # Perform a forward pass (evaluate the model on this training batch).
-            # This will return the loss (rather than the model output) because we
-            # have provided the `labels`.
-            # The documentation for this `model` function is here:
-            # https://huggingface.co/transformers/v2.2.0/model_doc/bert.html#transformers.BertForSequenceClassification
             outputs = model(b_input_ids,
                             token_type_ids=None,
                             attention_mask=b_input_mask,
                             labels=b_labels)
 
-            # The call to `model` always returns a tuple, so we need to pull the
-            # loss value out of the tuple.
+            # Pull the loss value out of the tuple.
             loss = outputs[0]
 
             # Accumulate the training loss over all of the batches so that we can
-            # calculate the average loss at the end. `loss` is a Tensor containing a
-            # single value; the `.item()` function just returns the Python value
-            # from the tensor.
+            # calculate the average loss at the end.
             total_loss += loss.item()
 
             # Perform a backward pass to calculate the gradients.
@@ -217,40 +190,29 @@ def train(attention_masks,input_ids,labels):
         # ========================================
         #               Validation
         # ========================================
-        # After the completion of each training epoch, measure our performance on
-        # our validation set.
 
         print("")
         print("Running Validation...")
 
-        t0 = time.time()
+        t0 = time.time() # Validation start time
 
-        # Put the model in evaluation mode--the dropout layers behave differently
-        # during evaluation.
+        # Put the model in evaluation mode
         model.eval()
 
-        # Tracking variables
         eval_loss, eval_accuracy = 0, 0
         nb_eval_steps, nb_eval_examples = 0, 0
 
         # Evaluate data for one epoch
         for batch in validation_dataloader:
-            # Add batch to GPU
+
             batch = tuple(t.to(device) for t in batch)
 
-            # Unpack the inputs from our dataloader
+
             b_input_ids, b_input_mask, b_labels = batch
 
             # Telling the model not to compute or store gradients, saving memory and
             # speeding up validation
             with torch.no_grad():
-                # Forward pass, calculate logit predictions.
-                # This will return the logits rather than the loss because we have
-                # not provided labels.
-                # token_type_ids is the same as the "segment ids", which
-                # differentiates sentence 1 and 2 in 2-sentence tasks.
-                # The documentation for this `model` function is here:
-                # https://huggingface.co/transformers/v2.2.0/model_doc/bert.html#transformers.BertForSequenceClassification
                 outputs = model(b_input_ids,
                                 token_type_ids=None,
                                 attention_mask=b_input_mask)
@@ -278,11 +240,32 @@ def train(attention_masks,input_ids,labels):
 
         if epoch % checkpoint == 0:
             print("Saving checkpoint...")
-            torch.save(model,save_model)
+            torch.save(model,Path(mode+save_model))
 
     print("")
     print("Training complete!")
 
+
+def foresttrain(X_train, Y_train):
+    '''
+    Train the random forest classifier and save to local.
+    :param X_train:
+    :param Y_train:
+    '''
+    forest = RandomForestClassifier(n_estimators=100, n_jobs=n_jobs)
+    forest.fit(X_train, Y_train)
+    dump(forest, 'forest.joblib')
+
+def nbtrain(X_train, Y_train):
+    '''
+    Train the Naive Bayes classifer and save to local.
+    :param X_train:
+    :param Y_train:
+    :return:
+    '''
+    nb = GaussianNB()
+    forest.fit(X_train, Y_train)
+    dump(forest, 'nb.joblib')
 
 def format_time(elapsed):
     '''
