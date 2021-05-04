@@ -1,5 +1,10 @@
 import pandas as pd
 from model import *
+from config import *
+from joblib import load
+import matplotlib.pyplot as plt
+
+from sklearn.metrics import plot_roc_curve, accuracy_score
 
 # ========================================
 #             Import Dataset
@@ -43,11 +48,11 @@ def main():
     attention_masks, input_ids = vectorize(text)  # tokenization + vectorization
     attention_masks_comment, input_ids_comment = vectorize(comment)
 
-    X_train, X_val, Y_train, Y_val, train_dataloader, validation_dataloader = vector_to_input(attention_masks,
+    X_train, Y_train, X_val, Y_val, train_dataloader, validation_dataloader = vector_to_input(attention_masks,
                                                                                               input_ids,
                                                                                               label)
 
-    X_train_c, X_val_c, Y_train_c, Y_val_c, comment_train, comment_text = vector_to_input(attention_masks_comment,
+    X_train_c, Y_train_c, X_val_c, Y_val_c, comment_train, comment_text = vector_to_input(attention_masks_comment,
                                                                                           input_ids_comment,
                                                                                           comment_label)
 
@@ -57,33 +62,35 @@ def main():
     # ========================================
 
     # train bert model, model save in 'news/comments + bertmodel.h5'
-    bertpretrain(train_dataloader, validation_dataloader,'news')
-    bertpretrain(comment_train, comment_text,'comment')
+    #bertpretrain(train_dataloader, validation_dataloader,'news')
+    #bertpretrain(comment_train, comment_text,'comment')
 
     # train other model (random forest / SVM / Naive Bayes/ ... )
 
-    # config model name 可以跑但是反辣
-
-    forest_model_name = 'forest.joblib'
-    nb_model_name = 'nb.joblib'
-
     # generate model file
-    foresttrain(X_train, X_val, forest_model_name)
-    nbtrain(X_train, X_val, nb_model_name)
-
-    # load_model
-    forest_prediction = forest_predict(Y_train, forest_model_name)
-    nb_prediction = nb_predict(Y_train, nb_model_name)
-    
-    # applying evaluation metrics
-    from sklearn.metrics import accuracy_score
-    print('forest accuracy',accuracy_score(Y_val, forest_prediction))
+    foresttrain(X_train, Y_train, forest_model_name)
+    nbtrain(X_train, Y_train, nb_model_name)
 
 
 
     # ========================================
     #                 Validation
     # ========================================
+
+    # load_model
+    forest_prediction = forest_predict(X_val, forest_model_name)
+    nb_prediction = nb_predict(X_val, nb_model_name)
+
+    # applying evaluation metrics
+    print('forest accuracy', accuracy_score(Y_val, forest_prediction))
+    print('nb accuracy', accuracy_score(Y_val, nb_prediction))
+
+    forest = load(forest_model_name)
+    nb = load(nb_model_name)
+    plot_roc_curve(forest, X_val, Y_val)
+    plot_roc_curve(nb, X_val, Y_val)
+    plt.show()
+
 
 
 if __name__ == '__main__':

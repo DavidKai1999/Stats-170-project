@@ -14,3 +14,6 @@ n_jobs = 2 # num of labels
 
 save_news_model = Path('.\\newsbertmodel.h5') # save news bert model
 save_comment_model = Path('.\\commentbertmodel.h5') # save comment bert model
+
+forest_model_name = 'forest.joblib'
+nb_model_name = 'nb.joblib'
