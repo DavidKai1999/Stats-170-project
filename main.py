@@ -17,9 +17,9 @@ engine = create_engine('postgresql://'+user+':'+password+'@localhost/news')
 
 Query = "SELECT * FROM redditcomment"
 comment_table = pd.read_sql_query(Query, con=engine)
-Query = "SELECT * FROM redditnews"
+Query = "SELECT title,text,label FROM redditnews"
 news_table = pd.read_sql_query(Query, con=engine)
-Query = "SELECT * FROM factcheck"
+Query = "SELECT title,text,author,label FROM factcheck"
 factcheck = pd.read_sql_query(Query, con=engine)
 
 
@@ -28,19 +28,30 @@ factcheck = pd.read_sql_query(Query, con=engine)
 # ========================================
 
 def main():
-    redditnews = news_table
-    sample = redditnews.sample(n=100,random_state=1)
 
-    redditcomment = comment_table
+    reddit_sample = news_table.sample(n=100,random_state=1)
+    factcheck_sample = factcheck.sample(n=10,random_state=1)
 
-    reddit = pd.merge(sample,redditcomment,
+    # Combine factcheck dataset and redditcomment dataset
+    news = pd.merge(reddit_sample,factcheck_sample,
+                    how='outer',
+                    left_on=['title','text','label'],
+                    right_on=['title','text','label']).reset_index(drop=True)
+
+    print('Length of news:',len(news))
+
+
+    df = pd.merge(news,comment_table,
                       how='left',
                       left_on=['title','text'],
-                      right_on=['title','text'])
-    comment_notnull = reddit.dropna(subset=['comment_text'])
+                      right_on=['title','text']).reset_index(drop=True)
 
-    text = sample.text.values
-    label = sample.label.values
+    print('Length after merging with comment:', len(df))
+
+    comment_notnull = df.dropna(subset=['comment_text']).reset_index(drop=True)
+
+    text = news.text.values
+    label = news.label.values
     comment = comment_notnull.comment_text.values
     comment_label = comment_notnull.label.values
 

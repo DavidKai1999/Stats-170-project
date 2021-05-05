@@ -24,9 +24,10 @@ CREATE TABLE factcheck (
     author varchar,
     url varchar,
     rating_type varchar,
-    rating varchar,
+    label int,
     datafeedelement varchar,
-    language varchar
+    language varchar,
+    title varchar
 );
 
 CREATE TABLE topic (
