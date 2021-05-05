@@ -3,6 +3,7 @@ from model import *
 from config import *
 from joblib import load
 import matplotlib.pyplot as plt
+from ignite.contrib.metrics import RocCurve
 
 from sklearn.metrics import plot_roc_curve, accuracy_score, confusion_matrix
 
@@ -63,23 +64,25 @@ def main():
 
 
     attention_masks, input_ids = vectorize(text)  # tokenization + vectorization
-    attention_masks_comment, input_ids_comment = vectorize(comment)
+    #attention_masks_comment, input_ids_comment = vectorize(comment)
 
     X_train, Y_train, X_val, Y_val, train_dataloader, validation_dataloader = vector_to_input(attention_masks,
                                                                                               input_ids,
                                                                                               label)
-
+    '''
     X_train_c, Y_train_c, X_val_c, Y_val_c, comment_train, comment_text = vector_to_input(attention_masks_comment,
                                                                                           input_ids_comment,
                                                                                           comment_label)
+    '''
 
     # ========================================
     #                 Train
     # ========================================
 
     # train bert model, model save in 'news/comments + bertmodel.h5'
-    #bertpretrain(train_dataloader, validation_dataloader,'news')
+    bertpretrain(train_dataloader, validation_dataloader,'news')
     #bertpretrain(comment_train, comment_text,'comment')
+
 
     # train other model (random forest / SVM / Naive Bayes/ ... )
 
@@ -92,10 +95,12 @@ def main():
     # ========================================
 
     # load_model
-    forest = load(forest_model_name)
-    nb = load(nb_model_name)
+    bert = torch.load(save_news_model)
+    #forest = load(forest_model_name)
+    #nb = load(nb_model_name)
 
     # prediction
+
     forest_train_pred = forest.predict(X_train)
     forest_val_pred = forest.predict(X_val)
 

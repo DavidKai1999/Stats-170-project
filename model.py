@@ -2,6 +2,7 @@
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
+import matplotlib.pyplot as plt
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
@@ -121,6 +122,7 @@ def bertpretrain(train_dataloader, validation_dataloader,mode):
 
     # Store the average loss after each epoch so we can plot them.
     loss_values = []
+    accuracy_values = []
 
     # For each epoch...
     for epoch in range(0, epochs):
@@ -248,6 +250,7 @@ def bertpretrain(train_dataloader, validation_dataloader,mode):
             nb_eval_steps += 1
 
         # Report the final accuracy for this validation run.
+        accuracy_values.append(eval_accuracy / nb_eval_steps)
         print("  Accuracy: {0:.2f}".format(eval_accuracy / nb_eval_steps))
         print("  Validation took: {:}".format(format_time(time.time() - t0)))
 
@@ -258,10 +261,21 @@ def bertpretrain(train_dataloader, validation_dataloader,mode):
             elif mode == 'comment':
                 torch.save(model,save_comment_model)
 
+    print("Saving model...")
+    if mode == 'news':
+        torch.save(model, save_news_model)
+    elif mode == 'comment':
+        torch.save(model, save_comment_model)
+
+    plot_acc_loss(accuracy_values,loss_values)
+
     print("")
     print("Training complete!")
 
-
+def bertpredict(model,X):
+    bert_pred = bert(X_val)[0].detach().numpy()
+    bertpred_class = np.argmax(bert_pred,axis=1).flatten()
+    return bertpred_class
 
 def foresttrain(X_train, Y_train, model_name):
     '''
@@ -316,3 +330,18 @@ def flat_accuracy(preds, labels):
     pred_flat = np.argmax(preds, axis=1).flatten()
     labels_flat = labels.flatten()
     return np.sum(pred_flat == labels_flat) / len(labels_flat)
+
+def plot_acc_loss(acc,loss):
+    x1 = range(0, epochs)
+    x2 = range(0, epochs)
+    y1 = acc
+    y2 = loss
+    plt.subplot(2, 1, 1)
+    plt.plot(x1, y1, 'o-')
+    plt.title('Test accuracy vs. epoches')
+    plt.ylabel('Test accuracy')
+    plt.subplot(2, 1, 2)
+    plt.plot(x2, y2, '.-')
+    plt.xlabel('Test loss vs. epoches')
+    plt.ylabel('Test loss')
+    plt.show()
