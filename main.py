@@ -4,7 +4,7 @@ from config import *
 from joblib import load
 import matplotlib.pyplot as plt
 
-from sklearn.metrics import plot_roc_curve, accuracy_score
+from sklearn.metrics import plot_roc_curve, accuracy_score, confusion_matrix
 
 # ========================================
 #             Import Dataset
@@ -89,15 +89,23 @@ def main():
     # ========================================
 
     # load_model
-    forest_prediction = forest_predict(X_val, forest_model_name)
-    nb_prediction = nb_predict(X_val, nb_model_name)
-
-    # applying evaluation metrics
-    print('forest accuracy', accuracy_score(Y_val, forest_prediction))
-    print('nb accuracy', accuracy_score(Y_val, nb_prediction))
-
     forest = load(forest_model_name)
     nb = load(nb_model_name)
+
+    # applying evaluation metrics
+    print('')
+    print('forest train accuracy', accuracy_score(Y_train, forest.predict(X_train)))
+    print('forest train matrix \n',confusion_matrix(Y_train,forest.predict(X_train)))
+    print('forest test accuracy', accuracy_score(Y_val, forest.predict(X_val)))
+    print('forest test matrix \n',confusion_matrix(Y_val,forest.predict(X_val)))
+    print('')
+    print('nb train accuracy', accuracy_score(Y_train, nb.predict(X_train)))
+    print('nb train matrix \n', confusion_matrix(Y_train, nb.predict(X_train)))
+    print('nb test accuracy', accuracy_score(Y_val, nb.predict(X_val)))
+    print('nb test matrix \n', confusion_matrix(Y_val, nb.predict(X_val)))
+    print('')
+
+
     plot_roc_curve(forest, X_val, Y_val)
     plot_roc_curve(nb, X_val, Y_val)
     plt.show()
