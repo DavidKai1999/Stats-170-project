@@ -92,18 +92,25 @@ def main():
     forest = load(forest_model_name)
     nb = load(nb_model_name)
 
+    # prediction
+    forest_train_pred = forest.predict(X_train)
+    forest_val_pred = forest.predict(X_val)
+
+    nb_train_pred = nb.predict(X_train)
+    nb_val_pred = forest.predict(X_val)
+
     # applying evaluation metrics
     print('')
-    print('forest train accuracy', accuracy_score(Y_train, forest.predict(X_train)))
-    print('forest train matrix \n',confusion_matrix(Y_train,forest.predict(X_train)))
-    print('forest test accuracy', accuracy_score(Y_val, forest.predict(X_val)))
-    print('forest test matrix \n',confusion_matrix(Y_val,forest.predict(X_val)))
+    print('forest train accuracy', accuracy_score(Y_train, forest_train_pred))
+    print('forest train matrix \n',confusion_matrix(Y_train,forest_train_pred))
+    print('forest test accuracy', accuracy_score(Y_val, forest_val_pred))
+    print('forest test matrix \n',confusion_matrix(Y_val,forest_val_pred))
+
     print('')
-    print('nb train accuracy', accuracy_score(Y_train, nb.predict(X_train)))
-    print('nb train matrix \n', confusion_matrix(Y_train, nb.predict(X_train)))
-    print('nb test accuracy', accuracy_score(Y_val, nb.predict(X_val)))
-    print('nb test matrix \n', confusion_matrix(Y_val, nb.predict(X_val)))
-    print('')
+    print('nb train accuracy', accuracy_score(Y_train, nb_train_pred))
+    print('nb train matrix \n', confusion_matrix(Y_train, nb_train_pred))
+    print('nb test accuracy', accuracy_score(Y_val, nb_val_pred))
+    print('nb test matrix \n', confusion_matrix(Y_val, nb_val_pred))
 
 
     plot_roc_curve(forest, X_val, Y_val)
