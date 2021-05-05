@@ -29,7 +29,6 @@ topic = pd.read_csv(topic_file)
 # ========================================
 #                 Main
 # ========================================
-
 def main():
 
     reddit_sample = news_table.sample(n=100,random_state=1)
@@ -46,7 +45,7 @@ def main():
                                left_on=['title', 'text'],
                                right_on=['title', 'text']).reset_index(drop=True)
 
-    print('Length of news:', len(df))
+    print('Length of news:', len(news_with_topic))
 
     df = pd.merge(news_with_topic,comment_table,
                       how='left',
@@ -74,7 +73,6 @@ def main():
                                                                                           input_ids_comment,
                                                                                           comment_label)
 
-
     # ========================================
     #                 Train
     # ========================================
@@ -88,8 +86,6 @@ def main():
     # generate model file
     foresttrain(X_train, Y_train, forest_model_name)
     nbtrain(X_train, Y_train, nb_model_name)
-
-
 
     # ========================================
     #                 Validation
@@ -123,7 +119,6 @@ def main():
     plot_roc_curve(forest, X_val, Y_val)
     plot_roc_curve(nb, X_val, Y_val)
     plt.show()
-
 
 
 if __name__ == '__main__':
