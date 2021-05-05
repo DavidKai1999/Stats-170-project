@@ -32,6 +32,7 @@ CREATE TABLE factcheck (
 
 CREATE TABLE topic (
 	title varchar,
+    text varchar,
     topic varchar,
     perception float
 );

@@ -11,6 +11,7 @@ from sklearn.metrics import plot_roc_curve, accuracy_score, confusion_matrix
 # ========================================
 user = 'postgres'
 password = 'Komaeda'
+topic_file = "C:\\Users\\gyiko\\OneDrive - personalmicrosoftsoftware.uci.edu\\STATS\\STATS 170AB\\Project\\datasets\\Sample_Topic.csv"
 
 from sqlalchemy import create_engine
 engine = create_engine('postgresql://'+user+':'+password+'@localhost/news')
@@ -21,6 +22,8 @@ Query = "SELECT title,text,label FROM redditnews"
 news_table = pd.read_sql_query(Query, con=engine)
 Query = "SELECT title,text,author,label FROM factcheck"
 factcheck = pd.read_sql_query(Query, con=engine)
+
+topic = pd.read_csv(topic_file)
 
 
 # ========================================
@@ -38,10 +41,14 @@ def main():
                     left_on=['title','text','label'],
                     right_on=['title','text','label']).reset_index(drop=True)
 
-    print('Length of news:',len(news))
+    news_with_topic = pd.merge(news,topic,
+                               how='left',
+                               left_on=['title', 'text'],
+                               right_on=['title', 'text']).reset_index(drop=True)
 
+    print('Length of news:', len(df))
 
-    df = pd.merge(news,comment_table,
+    df = pd.merge(news_with_topic,comment_table,
                       how='left',
                       left_on=['title','text'],
                       right_on=['title','text']).reset_index(drop=True)
