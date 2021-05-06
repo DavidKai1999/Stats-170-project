@@ -59,11 +59,15 @@ def main():
 
     text = news.text.values
     label = news.label.values
+    title = news.title.values
+    news['text_combined'] = news['text']+ news['title']*2
+    text_title_combined = news.text_combined.values
+    
     comment = comment_notnull.comment_text.values
     comment_label = comment_notnull.label.values
 
 
-    attention_masks, input_ids = vectorize(text)  # tokenization + vectorization
+    attention_masks, input_ids = vectorize(text_title_combined)  # tokenization + vectorization
     #attention_masks_comment, input_ids_comment = vectorize(comment)
 
     X_train, Y_train, X_val, Y_val, train_dataloader, validation_dataloader = vector_to_input(attention_masks,
@@ -85,10 +89,16 @@ def main():
 
 
     # train other model (random forest / SVM / Naive Bayes/ ... )
-
+    
     # generate model file
+    forest_model_name = 'model_forest.joblib'
+    nb_model_name = 'model_nb.joblib'
+    lr_model_name = 'model_lr.joblib'
+    
+    
     foresttrain(X_train, Y_train, forest_model_name)
     nbtrain(X_train, Y_train, nb_model_name)
+    lrtrain(X_train, Y_train, lr_model_name)
 
     # ========================================
     #                 Validation
@@ -96,8 +106,10 @@ def main():
 
     # load_model
     bert = torch.load(save_news_model)
-    #forest = load(forest_model_name)
-    #nb = load(nb_model_name)
+    
+    # forest = load(forest_model_name)
+    # nb = load(nb_model_name)
+    # lr = load(lr_model_name)
 
     # prediction
 
@@ -105,21 +117,19 @@ def main():
     forest_val_pred = forest.predict(X_val)
 
     nb_train_pred = nb.predict(X_train)
-    nb_val_pred = forest.predict(X_val)
+    nb_val_pred = nb.predict(X_val)
+    
+    lr_train_pred = lr.predict(X_train)
+    lr_val_pred = lr.predict(X_val)
 
     # applying evaluation metrics
     print('')
-    print('forest train accuracy', accuracy_score(Y_train, forest_train_pred))
-    print('forest train matrix \n',confusion_matrix(Y_train,forest_train_pred))
-    print('forest test accuracy', accuracy_score(Y_val, forest_val_pred))
-    print('forest test matrix \n',confusion_matrix(Y_val,forest_val_pred))
-
-    print('')
-    print('nb train accuracy', accuracy_score(Y_train, nb_train_pred))
-    print('nb train matrix \n', confusion_matrix(Y_train, nb_train_pred))
-    print('nb test accuracy', accuracy_score(Y_val, nb_val_pred))
-    print('nb test matrix \n', confusion_matrix(Y_val, nb_val_pred))
-
+    binary_eval('forest_train',Y_train,forest_train_pred)
+    binary_eval('forest_val',Y_val,forest_val_pred)
+    binary_eval('nb_train',Y_train,nb_train_pred)
+    binary_eval('nb_val',Y_val,nb_val_pred)
+    binary_eval('lr_train',Y_train,lr_train_pred)
+    binary_eval('lr_val',Y_val,lr_val_pred)
 
     plot_roc_curve(forest, X_val, Y_val)
     plot_roc_curve(nb, X_val, Y_val)
