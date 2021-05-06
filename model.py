@@ -298,6 +298,16 @@ def forest_predict(X_val, model_name):
     forest_prediction = forest.predict(X_val)
     return forest_prediction
 
+def lrtrain(X_train, Y_train, model_name):
+    lr = LogisticRegression(n_jobs=5)
+    lr.fit(X_train, Y_train)
+    dump(lr,model_name)
+
+def lr_predict(X_val, model_name):
+    lr= load(model_name)
+    lr_prediction = lr.predict(X_val)
+    return lr_prediction
+
 def nbtrain(X_train, Y_train, model_name):
     '''
     Train the Naive Bayes classifer and save to local.
