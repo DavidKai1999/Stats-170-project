@@ -1,6 +1,7 @@
 import pandas as pd
 from model import *
 from config import *
+from evaluation import *
 from joblib import load
 import matplotlib.pyplot as plt
 from ignite.contrib.metrics import RocCurve
