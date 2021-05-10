@@ -16,7 +16,7 @@ password = 'Komaeda'
 topic_file = "C:\\Users\\gyiko\\OneDrive - personalmicrosoftsoftware.uci.edu\\STATS\\STATS 170AB\\Project\\datasets\\Sample_Topic.csv"
 
 from sqlalchemy import create_engine
-engine = create_engine('postgresql://'+user+':'+password+'@localhost/news')
+engine = create_engine('postgresql:// ' +use r +': ' +passwor d +'@localhost/news')
 
 Query = "SELECT * FROM redditcomment"
 comment_table = pd.read_sql_query(Query, con=engine)
@@ -33,26 +33,26 @@ topic = pd.read_csv(topic_file)
 # ========================================
 def main():
 
-    reddit_sample = news_table.sample(n=100,random_state=1)
-    factcheck_sample = factcheck.sample(n=10,random_state=1)
+    reddit_sample = news_table.sample(n=100 ,random_state=1)
+    factcheck_sample = factcheck.sample(n=10 ,random_state=1)
 
     # Combine factcheck dataset and redditcomment dataset
-    news = pd.merge(reddit_sample,factcheck_sample,
+    news = pd.merge(reddit_sample ,factcheck_sample,
                     how='outer',
-                    left_on=['title','text','label'],
-                    right_on=['title','text','label']).reset_index(drop=True)
+                    left_on=['title' ,'text' ,'label'],
+                    right_on=['title' ,'text' ,'label']).reset_index(drop=True)
 
-    news_with_topic = pd.merge(news,topic,
+    news_with_topic = pd.merge(news ,topic,
                                how='left',
                                left_on=['title', 'text'],
                                right_on=['title', 'text']).reset_index(drop=True)
 
     print('Length of news:', len(news_with_topic))
 
-    df = pd.merge(news_with_topic,comment_table,
-                      how='left',
-                      left_on=['title','text'],
-                      right_on=['title','text']).reset_index(drop=True)
+    df = pd.merge(news_with_topic ,comment_table,
+                  how='left',
+                  left_on=['title' ,'text'],
+                  right_on=['title' ,'text']).reset_index(drop=True)
 
     print('Length after merging with comment:', len(df))
 
@@ -61,15 +61,15 @@ def main():
     text = news.text.values
     label = news.label.values
     title = news.title.values
-    news['text_combined'] = news['text']+ news['title']*2
+    news['text_combined'] = news['text' ]+ news['title' ] *2
     text_title_combined = news.text_combined.values
-    
+
     comment = comment_notnull.comment_text.values
     comment_label = comment_notnull.label.values
 
 
     attention_masks, input_ids = vectorize(text_title_combined)  # tokenization + vectorization
-    #attention_masks_comment, input_ids_comment = vectorize(comment)
+    # attention_masks_comment, input_ids_comment = vectorize(comment)
 
     X_train, Y_train, X_val, Y_val, train_dataloader, validation_dataloader = vector_to_input(attention_masks,
                                                                                               input_ids,
@@ -81,33 +81,12 @@ def main():
     '''
 
     # ========================================
-    #                 Train
-    # ========================================
-
-    # train bert model, model save in 'news/comments + bertmodel.h5'
-    bertpretrain(train_dataloader, validation_dataloader,'news')
-    #bertpretrain(comment_train, comment_text,'comment')
-
-
-    # train other model (random forest / SVM / Naive Bayes/ ... )
-    
-    # generate model file
-    forest_model_name = 'model_forest.joblib'
-    nb_model_name = 'model_nb.joblib'
-    lr_model_name = 'model_lr.joblib'
-    
-    
-    foresttrain(X_train, Y_train, forest_model_name)
-    nbtrain(X_train, Y_train, nb_model_name)
-    lrtrain(X_train, Y_train, lr_model_name)
-
-    # ========================================
     #                 Validation
     # ========================================
 
     # load_model
     bert = torch.load(save_news_model)
-    
+
     # forest = load(forest_model_name)
     # nb = load(nb_model_name)
     # lr = load(lr_model_name)
@@ -119,18 +98,18 @@ def main():
 
     nb_train_pred = nb.predict(X_train)
     nb_val_pred = nb.predict(X_val)
-    
+
     lr_train_pred = lr.predict(X_train)
     lr_val_pred = lr.predict(X_val)
 
     # applying evaluation metrics
     print('')
-    binary_eval('forest_train',Y_train,forest_train_pred)
-    binary_eval('forest_val',Y_val,forest_val_pred)
-    binary_eval('nb_train',Y_train,nb_train_pred)
-    binary_eval('nb_val',Y_val,nb_val_pred)
-    binary_eval('lr_train',Y_train,lr_train_pred)
-    binary_eval('lr_val',Y_val,lr_val_pred)
+    binary_eval('forest_train', Y_train, forest_train_pred)
+    binary_eval('forest_val', Y_val, forest_val_pred)
+    binary_eval('nb_train', Y_train, nb_train_pred)
+    binary_eval('nb_val', Y_val, nb_val_pred)
+    binary_eval('lr_train', Y_train, lr_train_pred)
+    binary_eval('lr_val', Y_val, lr_val_pred)
 
     plot_roc_curve(forest, X_val, Y_val)
     plot_roc_curve(nb, X_val, Y_val)

@@ -49,8 +49,10 @@ def vectorize(text):
 
 def vector_to_input(attention_masks,input_ids,labels):
     train_inputs, validation_inputs, train_labels, validation_labels = train_test_split(input_ids, labels,
+                                                                                        random_state=1,
                                                                                         test_size=0.2)
-    train_masks, validation_masks, _, _ = train_test_split(attention_masks, labels, test_size=0.2)
+    train_masks, validation_masks, _, _ = train_test_split(attention_masks, labels,
+                                                           random_state=1, test_size=0.2)
 
     # changing the numpy arrays into tensors for working on GPU.
     train_inputs = torch.tensor(train_inputs)
