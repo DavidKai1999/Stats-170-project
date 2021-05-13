@@ -1,80 +1,25 @@
 
-from sklearn.model_selection import train_test_split
+
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 import matplotlib.pyplot as plt
 
 import torch
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-from keras.preprocessing.sequence import pad_sequences
+
 
 from transformers import BertForSequenceClassification, AdamW, BertConfig
-from transformers import BertTokenizer
+
 from transformers import get_linear_schedule_with_warmup
 import time
 import datetime
 import random
 import numpy as np
 from joblib import dump, load
-from pathlib import Path
+
 
 # parameters for training
 from config import *
-
-def vectorize(text):
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-
-    input_ids = []
-    for t in text:
-        # so basically encode tokenizing , mapping sentences to thier token ids after adding special tokens.
-        encoded_sent = tokenizer.encode(
-            t,  # Sentence which are encoding.
-            add_special_tokens=True,  # Adding special tokens '[CLS]' and '[SEP]'
-        )
-        input_ids.append(encoded_sent)
-
-    input_ids = pad_sequences(input_ids, maxlen=MAX_LEN , truncating="post", padding="post")
-
-    attention_masks = []
-    for sent in input_ids:
-        # Generating attention mask for sentences.
-        #   - when there is 0 present as token id we are going to set mask as 0.
-        #   - we are going to set mask 1 for all non-zero positive input id.
-        att_mask = [int(token_id > 0) for token_id in sent]
-
-        attention_masks.append(att_mask)
-
-    return attention_masks, input_ids
-
-def vector_to_input(attention_masks,input_ids,labels):
-    train_inputs, validation_inputs, train_labels, validation_labels = train_test_split(input_ids, labels,
-                                                                                        random_state=1,
-                                                                                        test_size=0.2)
-    train_masks, validation_masks, _, _ = train_test_split(attention_masks, labels,
-                                                           random_state=1, test_size=0.2)
-
-    # changing the numpy arrays into tensors for working on GPU.
-    train_inputs = torch.tensor(train_inputs)
-    validation_inputs = torch.tensor(validation_inputs)
-
-    train_labels = torch.tensor(train_labels)
-    validation_labels = torch.tensor(validation_labels)
-
-    train_masks = torch.tensor(train_masks)
-    validation_masks = torch.tensor(validation_masks)
-
-    # DataLoader for our training set.
-    train_data = TensorDataset(train_inputs, train_masks, train_labels)
-    train_sampler = RandomSampler(train_data)
-    train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=batch_size)
-
-    # DataLoader for our validation(test) set.
-    validation_data = TensorDataset(validation_inputs, validation_masks, validation_labels)
-    validation_sampler = SequentialSampler(validation_data)
-    validation_dataloader = DataLoader(validation_data, sampler=validation_sampler, batch_size=batch_size)
-
-    return train_inputs, train_labels, validation_inputs, validation_labels, train_dataloader, validation_dataloader
 
 
 def bertpretrain(train_dataloader, validation_dataloader,mode):
@@ -327,6 +272,11 @@ def nb_predict(X_val, model_name):
     nb = load(model_name)
     nb_prediction = nb.predict(X_val)
     return nb_prediction
+
+
+# ========================================
+#             Helper Functions
+# ========================================
 
 def format_time(elapsed):
     '''
