@@ -7,17 +7,19 @@ from config import *
 
 def main():
     # XY of news features
-    X_train, Y_train, X_val, Y_val, train_dataloader, validation_dataloader = get_news_data()
+    X_train, Y_train, X_val, Y_val, \
+    train_inputs, train_masks, validation_inputs, validation_masks,\
+    train_dataloader, validation_dataloader = get_news_data()
 
     # XY of comments features
-    #X_train_c, Y_train_c, X_val_c, Y_val_c, comment_train, comment_val = get_comments_data()
+    #X_train_c, Y_train_c, X_val_c, Y_val_c, _, _, _, _, comment_train, comment_val = get_comments_data()
 
     # ========================================
-    #                 Train
+    #                Classifiers
     # ========================================
 
     # train bert model, model save in 'news/comments + bertmodel.h5'
-    #bertpretrain(train_dataloader, validation_dataloader,'news')
+    bertpretrain(train_dataloader, validation_dataloader,'news')
     #bertpretrain(comment_train, comment_val,'comment')
 
 

@@ -6,3 +6,4 @@ def binary_eval(model_type:str, label, prediction):
     print(model_type,'forest f1',f1_score(label, prediction, average='weighted'))
     print(model_type,'roc_auc', roc_auc_score(label, prediction, average='weighted'))
     print(model_type,'confusion matrix', confusion_matrix(label, prediction))
+    print('')

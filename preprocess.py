@@ -71,11 +71,14 @@ def get_news_data():
                                              input_id=input_ids.tolist())  # Assign mask and input_ids back to dataframe
 
 
-    X_train, Y_train, X_val, Y_val, train_dataloader, validation_dataloader = vector_to_input(news_df,
-                                                                                              attention_masks,
-                                                                                              input_ids, mode='news')
 
-    return X_train, Y_train, X_val, Y_val, train_dataloader, validation_dataloader
+    X_train, Y_train, X_val, Y_val, \
+    train_inputs, train_masks, validation_inputs, validation_masks,\
+    train_dataloader, validation_dataloader = vector_to_input(news_df,attention_masks,input_ids,mode='news')
+
+    return X_train, Y_train, X_val, Y_val, \
+           train_inputs, train_masks, validation_inputs, validation_masks,\
+           train_dataloader, validation_dataloader
 
 def get_comments_data():
     _, comments_df = import_data()
@@ -86,11 +89,13 @@ def get_comments_data():
                        input_id=input_ids.tolist())
 
 
-    X_train, Y_train, X_val, Y_val, train_dataloader, validation_dataloader = vector_to_input(comments_df,
-                                                                                              attention_masks,input_ids,
-                                                                                              mode='comments')
+    X_train, Y_train, X_val, Y_val, \
+    train_inputs, train_masks, validation_inputs, validation_masks,\
+    train_dataloader, validation_dataloader = vector_to_input(comments_df,attention_masks,input_ids,mode='comments')
 
-    return X_train, Y_train, X_val, Y_val, train_dataloader, validation_dataloader
+    return X_train, Y_train, X_val, Y_val, \
+           train_inputs, train_masks, validation_inputs, validation_masks,\
+           train_dataloader, validation_dataloader
 
 # ========================================
 #             Helper Functions
@@ -200,7 +205,9 @@ def vector_to_input(df,attention_masks,input_ids,mode):
     validation_sampler = SequentialSampler(validation_data)
     validation_dataloader = DataLoader(validation_data, sampler=validation_sampler, batch_size=batch_size)
 
-    return train_X, train_labels, val_X, validation_labels, train_dataloader, validation_dataloader
+    return train_X, train_labels, val_X, validation_labels, \
+           train_inputs, train_masks, validation_inputs, validation_masks,\
+           train_dataloader, validation_dataloader
 
 
 def pad_infinite(iterable, padding=None):

@@ -11,6 +11,7 @@ checkpoint = 1
 
 n_jobs = 2 # num of labels
 
+cutoff = 0.5 # cutoff in WMVE. If
 
 save_news_model = Path('.\\newsbertmodel.h5') # save news bert model
 save_comment_model = Path('.\\commentbertmodel.h5') # save comment bert model

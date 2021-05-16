@@ -220,8 +220,10 @@ def bertpretrain(train_dataloader, validation_dataloader,mode):
     print("")
     print("Training complete!")
 
-def bertpredict(model,X):
-    bert_pred = bert(X_val)[0].detach().numpy()
+def bertpredict(model,inputs,masks):
+    bert_pred = model(inputs,
+                      token_type_ids=None,
+                      attention_mask=masks)[0].detach().cpu().numpy()
     bertpred_class = np.argmax(bert_pred,axis=1).flatten()
     return bertpred_class
 
