@@ -48,18 +48,24 @@ def import_data():
                                left_on=['title', 'text'],
                                right_on=['title', 'text']).reset_index(drop=True)
 
+    news_df = news_df.assign(news_index = [i for i in range(0,len(news_df))])
 
     comments_df = pd.merge(news_df, comment_table,
                            how='left',
                            left_on=['title', 'text'],
                            right_on=['title', 'text']).dropna(subset=['comment_text']).reset_index(drop=True)
+    comments_df = comments_df.assign(have_comment=[1] * len(comments_df))
 
+    news_comments_relationship = comments_df[['news_index', 'have_comment']].drop_duplicates()
 
-    return news_df, comments_df
+    news_df.to_csv('temp_news_df.csv')
+    comments_df.to_csv('temp_comments_df.csv')
+    news_comments_relationship.to_csv('temp_relationship.csv')
+    return news_df, comments_df,news_comments_relationship
 
 
 def get_news_data():
-    news_df, _ = import_data()
+    news_df, _, _ = import_data()
     print('Length of news:', len(news_df))
 
     news_df['text_combined'] = news_df['text'] + news_df['title'] * 2
@@ -81,7 +87,9 @@ def get_news_data():
            train_dataloader, validation_dataloader
 
 def get_comments_data():
-    _, comments_df = import_data()
+    #_, comments_df, _ = import_data()
+    comments_df = pd.read_csv('temp_comments_df.csv')
+
     print('Length of comments:', len(comments_df))
 
     attention_masks, input_ids = vectorize(comments_df.comment_text.values)
