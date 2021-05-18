@@ -12,8 +12,6 @@ from ignite.contrib.metrics import RocCurve
 
 from sklearn.metrics import plot_roc_curve, accuracy_score, confusion_matrix
 
-
-
 def main():
 
     # XY of news features
@@ -51,7 +49,7 @@ def main():
                                     'lr': lr_train_pred})
 
     weight = train_weight(classfiers_pred, Y_train)
-    voting_train_pred = WMVEpredict(weight, classfiers_pred)
+    voting_train_pred = WMVEpredict(weight, classfiers_pred,use_softmax=True)
     binary_eval('voting_train', Y_train, voting_train_pred)
 
 

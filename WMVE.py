@@ -1,19 +1,34 @@
 
 from config import *
 import torch
+from random import randrange
 
-def WMVEpredict(weight, preds):
+def WMVEpredict(weight, preds,use_softmax=False):
+    softmax = torch.nn.Softmax()
     result = []
     bert_pre = preds['bert'].values
     forest_pre = preds['forest'].values
     nb_pre = preds['nb'].values
     lr_pre = preds['lr'].values
     for i in range(0, len(bert_pre)):
-        sum = weight[0]*bert_pre[i] + weight[1]*forest_pre[i] + weight[2]*nb_pre[i] + weight[3]*lr_pre[i]
-        if sum >= cutoff:
+        labels = torch.FloatTensor([0,0])
+        labels[bert_pre[i]] += weight[0]
+        labels[forest_pre[i]] += weight[1]
+        labels[nb_pre[i]] += weight[2]
+        labels[lr_pre[i]] += weight[3]
+
+        if use_softmax:
+            votes = softmax(labels)
+        else:
+            votes = labels
+
+        if votes[0] > votes[1]:
+            result.append(0)
+        elif votes[0] < votes[1]:
             result.append(1)
         else:
-            result.append(0)
+            result.append(randrange(2))
+
     return result
 
 def train_weight(preds, label, num=4):
