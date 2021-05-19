@@ -19,7 +19,7 @@ def main():
 
     # train bert model, model save in 'news/comments + bertmodel.h5'
     #bertpretrain(train_dataloader, validation_dataloader,'news')
-    bertpretrain(comment_train, comment_val,'comment')
+    #bertpretrain(comment_train, comment_val,'comment')
 
 
     # train other model (random forest / SVM / Naive Bayes/ ... )
@@ -28,9 +28,9 @@ def main():
     #nbtrain(X_train, Y_train, nb_news_model)
     #lrtrain(X_train, Y_train, lr_news_model)
 
-    #foresttrain(X_train_c, Y_train_c, forest_comment_model)
-    #nbtrain(X_train_c, Y_train_c, nb_comment_model)
-    #lrtrain(X_train_c, Y_train_c, lr_comment_model)
+    foresttrain(X_train_c, Y_train_c, forest_comment_model)
+    nbtrain(X_train_c, Y_train_c, nb_comment_model)
+    lrtrain(X_train_c, Y_train_c, lr_comment_model)
 
     print('Classifiers Training Complete!')
 

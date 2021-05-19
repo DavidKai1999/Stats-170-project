@@ -92,7 +92,7 @@ def get_comments_data():
 
     print('Length of comments:', len(comments_df))
 
-    attention_masks, input_ids = vectorize(comments_df.comment_text.values)
+    attention_masks, input_ids = vectorize(comments_df.comment_text.values,MAX_LEN=32)
     comments_df.assign(attention_mask=attention_masks,
                        input_id=input_ids.tolist())
 

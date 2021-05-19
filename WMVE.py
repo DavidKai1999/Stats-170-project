@@ -12,10 +12,10 @@ def WMVEpredict(weight:list, preds,use_softmax=False,final=False):
     nb_pre = preds['nb'].values
     lr_pre = preds['lr'].values
     if final:
-        comments_pre = preds['comment'].values
+        comment_pre = preds['comment'].values
         weight1, weight2 = weight
         for i in range(0, len(bert_pre)):
-            if comments_pre[i] == None:
+            if comment_pre[i] == 2:
                 labels = torch.FloatTensor([0, 0])
                 labels[bert_pre[i]] += weight1[0]
                 labels[forest_pre[i]] += weight1[1]
@@ -76,12 +76,16 @@ def WMVEpredict(weight:list, preds,use_softmax=False,final=False):
     return result
 
 def train_weight(preds, label, num=4,final = False):
+    bert_pre = preds['bert'].values
+    forest_pre = preds['forest'].values
+    nb_pre = preds['nb'].values
+    lr_pre = preds['lr'].values
     if final:
         weight1 = [1]*num
         weight2 = [1]*(num+1)
-
+        comment_pre = preds['comment'].values
         for i in range(0,len(label)):
-            if comment == None:
+            if comment_pre[i] == 2:
                 update = [0]*num
                 wrong = 0
                 if bert_pre[i] == label[i]:
@@ -149,10 +153,6 @@ def train_weight(preds, label, num=4,final = False):
 
     else:
         weight = [1]*num
-        bert_pre = preds['bert'].values
-        forest_pre = preds['forest'].values
-        nb_pre = preds['nb'].values
-        lr_pre = preds['lr'].values
         for i in range(0,len(label)):
             update = [0]*num
             wrong = 0
@@ -205,21 +205,18 @@ def comments_voting(weight,mode='train'):
                 comments = comments_df[comments_df['news_index'] == i].reset_index(drop=True)
                 result.append(voting_for_one_news(weight,comments))
             else:
-                result.append(None)
+                result.append(2)
     elif mode=='val':
         for i in validation_index:
             if i in has_comment_index:
                 comments = comments_df[comments_df['news_index'] == i].reset_index(drop=True)
                 result.append(voting_for_one_news(weight,comments))
             else:
-                result.append(None)
+                result.append(2)
     return result
 
 def voting_for_one_news(weight,df):
-    print('len df', len(df))
-    attention_masks, input_ids = vectorize(df.comment_text.values)
-    print(type(input_ids),input_ids)
-    print(type(attention_masks),attention_masks)
+    attention_masks, input_ids = vectorize(df.comment_text.values,MAX_LEN=32)
 
     temp = input_ids.tolist()
     author = []
@@ -241,6 +238,9 @@ def voting_for_one_news(weight,df):
         temp[i].extend(subreddit[i])
         temp[i].append(int(df['comment_score'][i]))
     X = np.array(temp)
+
+    input_ids = torch.tensor(input_ids)
+    attention_masks = torch.tensor(attention_masks)
 
     bert_c = torch.load(save_comment_model)
     forest_c = load(forest_comment_model)

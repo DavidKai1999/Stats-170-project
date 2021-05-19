@@ -22,7 +22,7 @@ from joblib import dump, load
 from config import *
 
 
-def bertpretrain(train_dataloader, validation_dataloader,mode):
+def bertpretrain(train_dataloader, validation_dataloader,mode,MAX_LEN=MAX_LEN):
     if mode == 'news':
         if save_news_model.exists():
             model = torch.load(save_news_model)
