@@ -195,7 +195,7 @@ def comments_voting(weight,mode='train'):
     labels = news_df.label.values
 
     result = []
-    train_index, validation_index, _, _ = train_test_split(news_index, labels, random_state=1, test_size=0.2)
+    train_index, validation_index, _, _ = train_test_split(news_index, labels)
 
     has_comment_index = relationship.news_index.values
 

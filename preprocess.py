@@ -1,7 +1,7 @@
 import pandas as pd
 from model import *
-
-from sklearn.model_selection import train_test_split
+from config import *
+from sklearn.model_selection import KFold
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
@@ -74,7 +74,7 @@ def get_news_data():
     attention_masks, input_ids = vectorize(text_title_combined)  # tokenization + vectorization
 
     news_df = news_df.assign(attention_mask=attention_masks,
-                                             input_id=input_ids.tolist())  # Assign mask and input_ids back to dataframe
+                             input_id=input_ids.tolist())  # Assign mask and input_ids back to dataframe
 
 
 
@@ -185,13 +185,11 @@ def vector_to_input(df,attention_masks,input_ids,mode):
             temp[i].append(int(df['comment_score'][i]))
         X = np.array(temp)
 
-    train_inputs, validation_inputs, train_labels, validation_labels = train_test_split(input_ids, labels,
-                                                                                        random_state=1,
-                                                                                        test_size=0.2)
-    train_masks, validation_masks, _, _ = train_test_split(attention_masks, labels,
-                                                           random_state=1, test_size=0.2)
+    train_inputs, validation_inputs, train_labels, validation_labels = train_test_split(input_ids, labels)
 
-    train_X, val_X, _, _ = train_test_split(X, labels, random_state=1, test_size=0.2)
+    train_masks, validation_masks, _, _ = train_test_split(attention_masks, labels)
+
+    train_X, val_X, _, _ = train_test_split(X, labels)
 
     # changing the numpy arrays into tensors for working on GPU.
     train_inputs = torch.tensor(train_inputs)
@@ -223,3 +221,32 @@ def pad_infinite(iterable, padding=None):
 
 def pad(iterable, size, padding=None):
    return islice(pad_infinite(iterable, padding), size)
+
+def train_test_split(X, Y, index=k_index, n_split=n_split):
+    kf = KFold(n_splits=n_split,shuffle=True,random_state=1)
+
+    X_trains = []
+    X_tests = []
+    for train,test in kf.split(X):
+        X_train = []
+        X_test = []
+        for i in train:
+            X_train.append(X[i])
+        for i in test:
+            X_test.append(X[i])
+        X_trains.append(X_train)
+        X_tests.append(X_test)
+
+    Y_trains = []
+    Y_tests = []
+    for train, test in kf.split(Y):
+        Y_train = []
+        Y_test = []
+        for i in train:
+            Y_train.append(Y[i])
+        for i in test:
+            Y_test.append(Y[i])
+        Y_trains.append(Y_train)
+        Y_tests.append(Y_test)
+
+    return X_trains[index], X_tests[index], Y_trains[index], Y_tests[index]
