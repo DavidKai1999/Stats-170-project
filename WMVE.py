@@ -7,6 +7,7 @@ from random import randrange
 def WMVEpredict(weight:list, preds,use_softmax=False,final=False):
     softmax = torch.nn.Softmax()
     result = []
+    prob = []
     bert_pre = preds['bert'].values
     forest_pre = preds['forest'].values
     nb_pre = preds['nb'].values
@@ -33,6 +34,7 @@ def WMVEpredict(weight:list, preds,use_softmax=False,final=False):
                     result.append(1)
                 else:
                     result.append(randrange(2))
+                prob.append((votes[1] / (votes[1] + votes[0])).item())
             else:
                 labels = torch.FloatTensor([0, 0])
                 labels[bert_pre[i]] += weight2[0]
@@ -52,6 +54,7 @@ def WMVEpredict(weight:list, preds,use_softmax=False,final=False):
                     result.append(1)
                 else:
                     result.append(randrange(2))
+                prob.append((votes[1] / (votes[1] + votes[0])).item())
     else:
         weight = weight[0]
         for i in range(0, len(bert_pre)):
@@ -72,8 +75,8 @@ def WMVEpredict(weight:list, preds,use_softmax=False,final=False):
                 result.append(1)
             else:
                 result.append(randrange(2))
-
-    return result
+            prob.append((votes[1] / (votes[1] + votes[0])).item())
+    return result, prob
 
 def train_weight(preds, label, num=4,final = False):
     bert_pre = preds['bert'].values
@@ -257,7 +260,7 @@ def voting_for_one_news(weight,df):
                                     'nb': nb_train_c,
                                     'lr': lr_train_c})
 
-    voting_pred = WMVEpredict([weight], classfiers_pred_train_c)
+    voting_pred,_ = WMVEpredict([weight], classfiers_pred_train_c)
 
     votes = [0,0]
     for i in voting_pred:

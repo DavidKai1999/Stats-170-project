@@ -22,9 +22,9 @@ def main():
 
     #train_comment_voting(train_inputs_c,train_masks_c,X_train_c,Y_train_c)
 
-    train_voting(train_inputs, train_masks, X_train, Y_train)
+    #train_voting(train_inputs, train_masks, X_train, Y_train)
 
-    #validate(validation_inputs, validation_masks, X_val, Y_val)
+    validate(validation_inputs, validation_masks, X_val, Y_val)
 
 
 def train_comment_voting(train_inputs_c,train_masks_c,X_train_c,Y_train_c):
@@ -98,7 +98,7 @@ def train_voting(train_inputs,train_masks,X_train,Y_train):
     with open("voting_weight.txt", "wb") as fp:  # Pickling
         pickle.dump([weight1,weight2], fp)
 
-    voting_train_pred = WMVEpredict([weight1, weight2], classfiers_pred_train,use_softmax=False,final=True)
+    voting_train_pred, _ = WMVEpredict([weight1, weight2], classfiers_pred_train,use_softmax=False,final=True)
     binary_eval('voting_train', Y_train, voting_train_pred)
 
     print('Training Voting Complete!')
@@ -136,7 +136,7 @@ def validate(validation_inputs,validation_masks,X_val,Y_val):
                                         'lr': lr_val_pred,
                                         'comment':comment_val_pred})
 
-    voting_val_pred = WMVEpredict(weight, classfiers_pred_val,use_softmax=False,final=True)
+    voting_val_pred, prob = WMVEpredict(weight, classfiers_pred_val,use_softmax=False,final=True)
 
 
     # applying evaluation metrics
@@ -147,11 +147,10 @@ def validate(validation_inputs,validation_masks,X_val,Y_val):
     binary_eval('lr_val', Y_val, lr_val_pred)
     binary_eval('voting_val', Y_val, voting_val_pred)
 
-    roc_curve(Y_val, voting_val_pred,pos_label=1)
+    plot_roc(prob,Y_val)
     plt.show()
 
     print('Complete!')
-
 
 
 if __name__ == '__main__':
