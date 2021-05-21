@@ -146,11 +146,11 @@ def train_weight(preds, label, num=4,final = False):
 
         total_weight1 = sum(weight1)
         for j in range(0, num):
-            weight1[j] = j/total_weight1
+            weight1[j] = weight1[j] / total_weight1
 
         total_weight2 = sum(weight2)
         for j in range(0, num+1):
-            weight2[j] = j / total_weight2
+            weight2[j] = weight2[j]  / total_weight2
 
         return weight1, weight2
 
@@ -184,7 +184,7 @@ def train_weight(preds, label, num=4,final = False):
 
         total_weight = sum(weight)
         for j in range(0, num):
-            weight[j] = j/total_weight
+            weight[j] = weight[j] /total_weight
         return weight
 
 def comments_voting(weight,mode='train'):
