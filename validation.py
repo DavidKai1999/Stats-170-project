@@ -7,39 +7,43 @@ import matplotlib.pyplot as plt
 from evaluation import *
 from WMVE import *
 import pickle
-from sklearn.metrics import plot_roc_curve, roc_curve
+from sklearn import preprocessing
 
 def main():
-    # XY of news features
-    X_train, Y_train, X_val, Y_val, \
-    train_inputs, train_masks, validation_inputs, validation_masks,_,_ = get_news_data()
 
-    # XY of comments features
-    #X_train_c, Y_train_c, X_val_c, Y_val_c,\
-    #train_inputs_c, train_masks_c, validation_inputs_c, validation_masks_c,_,_ = get_comments_data()
+    with open("news_data.txt", "rb") as fp:  # Pickling
+        X_train, Y_train, X_val, Y_val = pickle.load(fp)
+
+    with open("comments_data.txt", "rb") as fp:  # Pickling
+        X_train_c, Y_train_c, X_val_c, Y_val_c = pickle.load(fp)
+
+    X = X_train.copy()
+    X.extend(X_val)
+    scaler = preprocessing.StandardScaler().fit(X)
+    X_train_1 = scaler.transform(X_train)
+    X_val_1 = scaler.transform(X_val)
+
+    #train_comment_voting(X_train_c,Y_train_c)
+
+    train_voting(X_train,X_train_1, Y_train)
+
+    validate(X_val, X_val_1, Y_val)
 
 
-
-    #train_comment_voting(train_inputs_c,train_masks_c,X_train_c,Y_train_c)
-
-    #train_voting(train_inputs, train_masks, X_train, Y_train)
-
-    validate(validation_inputs, validation_masks, X_val, Y_val)
-
-
-def train_comment_voting(train_inputs_c,train_masks_c,X_train_c,Y_train_c):
+def train_comment_voting(X_train_c,Y_train_c):
     # ========================================
     #           Train Comment Voting
     # ========================================
     print('Training Comment Voting...')
-    print('')
+
     # load comment model
     bert_c = torch.load(save_comment_model)
     forest_c = load(forest_comment_model)
     nb_c = load(nb_comment_model)
     lr_c = load(lr_comment_model)
 
-    bert_train_c = bertpredict(bert_c, train_inputs_c, train_masks_c)
+    with open("comments_train_pred.txt", "rb") as fp:  # Pickling
+        bert_train_c = pickle.load(fp)
     forest_train_c = forest_c.predict(X_train_c)
     nb_train_c = nb_c.predict(X_train_c)
     lr_train_c = lr_c.predict(X_train_c)
@@ -57,29 +61,30 @@ def train_comment_voting(train_inputs_c,train_masks_c,X_train_c,Y_train_c):
         pickle.dump(weight_c, fp)
 
     print('Training Comment Voting Complete!')
+    print('')
 
 
-def train_voting(train_inputs,train_masks,X_train,Y_train):
+def train_voting(X_train, X_train_1, Y_train):
     # ========================================
     #               Train Voting
     # ========================================
     print('Training Voting...')
-    print('')
 
     # load model
-    bert = torch.load(save_news_model)
+    #bert = torch.load(save_news_model)
     forest = load(forest_news_model)
     nb = load(nb_news_model)
     lr = load(lr_news_model)
 
-    with open("comment_weight.txt", "rb") as fp:  # Unpickling
-        weight_c = pickle.load(fp)
+    #with open("comment_weight.txt", "rb") as fp:  # Unpickling
+    #    weight_c = pickle.load(fp)
 
-    bert_train_pred = bertpredict(bert, train_inputs, train_masks)
+    with open("news_train_pred.txt", "rb") as fp:  # Pickling
+        bert_train_pred = pickle.load(fp)
     forest_train_pred = forest.predict(X_train)
-    nb_train_pred = nb.predict(X_train)
-    lr_train_pred = lr.predict(X_train)
-    comment_train_pred = comments_voting(weight_c,mode='train')
+    nb_train_pred = nb.predict(X_train_1)
+    lr_train_pred = lr.predict(X_train_1)
+    comment_train_pred = comments_voting(mode='train')
 
     binary_eval('bert_train', Y_train, bert_train_pred)
     binary_eval('forest_train', Y_train, forest_train_pred)
@@ -93,7 +98,8 @@ def train_voting(train_inputs,train_masks,X_train,Y_train):
                                           'comment':comment_train_pred})
 
     weight1, weight2 = train_weight(classfiers_pred_train, Y_train, final=True)
-    print(weight1,weight2)
+    print('Weight1:',weight1)
+    print('Weight2:',weight2)
 
     with open("voting_weight.txt", "wb") as fp:  # Pickling
         pickle.dump([weight1,weight2], fp)
@@ -102,14 +108,15 @@ def train_voting(train_inputs,train_masks,X_train,Y_train):
     binary_eval('voting_train', Y_train, voting_train_pred)
 
     print('Training Voting Complete!')
+    print('')
 
-def validate(validation_inputs,validation_masks,X_val,Y_val):
+def validate(X_val,X_val_1,Y_val):
 
     # ========================================
     #                 Validation
     # ========================================
     # load model
-    bert = torch.load(save_news_model)
+    #bert = torch.load(save_news_model)
     forest = load(forest_news_model)
     nb = load(nb_news_model)
     lr = load(lr_news_model)
@@ -117,18 +124,18 @@ def validate(validation_inputs,validation_masks,X_val,Y_val):
     with open("voting_weight.txt", "rb") as fp:  # Unpickling
         weight = pickle.load(fp)
 
-    with open("comment_weight.txt", "rb") as fp:  # Unpickling
-        weight_c = pickle.load(fp)
+    #with open("comment_weight.txt", "rb") as fp:  # Unpickling
+    #    weight_c = pickle.load(fp)
 
     print('Validating...')
-    print('')
 
     # prediction
-    bert_val_pred = bertpredict(bert, validation_inputs,validation_masks)
+    with open("news_val_pred.txt", "rb") as fp:  # Pickling
+        bert_val_pred = pickle.load(fp)
     forest_val_pred = forest.predict(X_val)
-    nb_val_pred = nb.predict(X_val)
-    lr_val_pred = lr.predict(X_val)
-    comment_val_pred = comments_voting(weight_c,mode='val')
+    nb_val_pred = nb.predict(X_val_1)
+    lr_val_pred = lr.predict(X_val_1)
+    comment_val_pred = comments_voting(mode='val')
 
     classfiers_pred_val = pd.DataFrame({'bert': bert_val_pred,
                                         'forest': forest_val_pred,

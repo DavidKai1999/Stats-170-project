@@ -1,5 +1,8 @@
 
 from pathlib import Path
+from transformers import BertTokenizer
+
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
 seed_val = 1 # random seed for training
 

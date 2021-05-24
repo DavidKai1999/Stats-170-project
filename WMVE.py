@@ -3,6 +3,11 @@ from config import *
 from preprocess import *
 import torch
 from random import randrange
+from evaluation import *
+
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.pipeline import Pipeline
 
 def WMVEpredict(weight:list, preds,use_softmax=False,final=False):
     softmax = torch.nn.Softmax()
@@ -187,7 +192,7 @@ def train_weight(preds, label, num=4,final = False):
             weight[j] = weight[j] /total_weight
         return weight
 
-def comments_voting(weight,mode='train'):
+def comments_voting(mode='train'):
     #news_df, comments_df, relationship = import_data()
 
     news_df = pd.read_csv('temp_news_df.csv')
@@ -197,44 +202,64 @@ def comments_voting(weight,mode='train'):
     news_index = news_df.news_index.values
     labels = news_df.label.values
 
+    over = SMOTE(sampling_strategy=0.4, random_state=1)
+    under = RandomUnderSampler(sampling_strategy=0.6, random_state=1)
+    resample = [('over', over), ('under', under)]
+    pipeline = Pipeline(steps=resample)
+
+    news_index, _ = pipeline.fit_resample(news_index.reshape(-1, 1), labels)
+
     result = []
-    train_index, validation_index, _, _ = train_test_split(news_index, labels)
+    comment_result = []
+    comment_label = []
+    train_index, validation_index, train_label, val_label = train_test_split(news_index, labels)
 
     has_comment_index = relationship.news_index.values
 
+    track = 0
     if mode=='train':
         for i in train_index:
             if i in has_comment_index:
-                comments = comments_df[comments_df['news_index'] == i].reset_index(drop=True)
-                result.append(voting_for_one_news(weight,comments))
+                comments = comments_df[comments_df['news_index'] == i[0]].reset_index(drop=True)
+                commentvote = voting_for_one_news(comments, tokenizer)
+                result.append(commentvote)
+                comment_result.append(commentvote)
+                comment_label.append(labels[track])
             else:
                 result.append(2)
+            track += 1
+        binary_eval_comment('comment_train', comment_label, comment_result)
     elif mode=='val':
         for i in validation_index:
             if i in has_comment_index:
-                comments = comments_df[comments_df['news_index'] == i].reset_index(drop=True)
-                result.append(voting_for_one_news(weight,comments))
+                comments = comments_df[comments_df['news_index'] == i[0]].reset_index(drop=True)
+                commentvote = voting_for_one_news(comments,tokenizer)
+                result.append(commentvote)
+                comment_result.append(commentvote)
+                comment_label.append(labels[track])
             else:
                 result.append(2)
+            track += 1
+        binary_eval_comment('comment_val', comment_label, comment_result)
     return result
 
-def voting_for_one_news(weight,df):
-    attention_masks, input_ids = vectorize(df.comment_text.values,MAX_LEN=32)
-
+def voting_for_one_news(df,tokenizer):
+    attention_masks, input_ids = vectorize(df.comment_text.values,tokenizer, MAX_LEN=32)
+    '''
     temp = input_ids.tolist()
     author = []
     for a in df['comment_author'].fillna(0):
         if a == 0:
             author.append([0,0,0,0,0])
         else:
-            vec = single_word_vec(a)
+            vec = single_word_vec(a,tokenizer)
             author.append(vec)
     subreddit = []
     for s in df['comment_subreddit'].fillna(0):
         if s == 0:
             subreddit.append([0, 0, 0, 0, 0])
         else:
-            vec = single_word_vec(s)
+            vec = single_word_vec(s,tokenizer)
             subreddit.append(vec)
     for i in range(0, len(df)):
         temp[i].extend(author[i])
@@ -242,28 +267,33 @@ def voting_for_one_news(weight,df):
         temp[i].append(int(df['comment_score'][i]))
     X = np.array(temp)
 
-    input_ids = torch.tensor(input_ids)
-    attention_masks = torch.tensor(attention_masks)
 
     bert_c = torch.load(save_comment_model)
     forest_c = load(forest_comment_model)
     nb_c = load(nb_comment_model)
     lr_c = load(lr_comment_model)
+    '''
 
-    bert_train_c = bertpredict(bert_c, input_ids, attention_masks)
-    forest_train_c= forest_c.predict(X)
-    nb_train_c = nb_c.predict(X)
-    lr_train_c = lr_c.predict(X)
+    input_ids = torch.tensor(input_ids)
+    attention_masks = torch.tensor(attention_masks)
 
-    classfiers_pred_train_c = pd.DataFrame({'bert': bert_train_c,
-                                    'forest': forest_train_c,
-                                    'nb': nb_train_c,
-                                    'lr': lr_train_c})
+    bert_c = torch.load(save_comment_model)
 
-    voting_pred,_ = WMVEpredict([weight], classfiers_pred_train_c)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    bert_train_c = bertpredict(bert_c, input_ids.to(device), attention_masks.to(device))
+    #forest_train_c= forest_c.predict(X)
+    #nb_train_c = nb_c.predict(X)
+    #lr_train_c = lr_c.predict(X)
+
+    #classfiers_pred_train_c = pd.DataFrame({'bert': bert_train_c,
+    #                                'forest': forest_train_c,
+    #                                'nb': nb_train_c,
+    #                                'lr': lr_train_c})
+
+    #voting_pred,_ = WMVEpredict([weight], classfiers_pred_train_c)
 
     votes = [0,0]
-    for i in voting_pred:
+    for i in bert_train_c:
         votes[i] += 1
 
         if votes[0] > votes[1]:

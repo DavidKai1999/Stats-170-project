@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from model import *
 from config import *
@@ -7,8 +8,13 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from keras.preprocessing.sequence import pad_sequences
 
-from transformers import BertTokenizer
 from itertools import chain, repeat, islice
+
+
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.pipeline import Pipeline
+
 
 # ========================================
 #             Import Dataset
@@ -30,10 +36,8 @@ def import_data():
     Query = "SELECT * FROM topic"
     topic = pd.read_sql_query(Query, con=engine)
 
-    #topic = pd.read_csv(topic_file,index_col=0)
-
-    reddit_sample = news_table.sample(n=100, random_state=1)
-    factcheck_sample = factcheck.sample(n=10, random_state=1)
+    reddit_sample = news_table.sample(n=1000, random_state=1)
+    factcheck_sample = factcheck.sample(n=100, random_state=1)
 
     # ========================================
     #             Combine Table
@@ -71,7 +75,7 @@ def get_news_data():
     news_df['text_combined'] = news_df['text'] + news_df['title'] * 2
     text_title_combined = news_df.text_combined.values
 
-    attention_masks, input_ids = vectorize(text_title_combined)  # tokenization + vectorization
+    attention_masks, input_ids = vectorize(text_title_combined,tokenizer)  # tokenization + vectorization
 
     news_df = news_df.assign(attention_mask=attention_masks,
                              input_id=input_ids.tolist())  # Assign mask and input_ids back to dataframe
@@ -80,7 +84,7 @@ def get_news_data():
 
     X_train, Y_train, X_val, Y_val, \
     train_inputs, train_masks, validation_inputs, validation_masks,\
-    train_dataloader, validation_dataloader = vector_to_input(news_df,attention_masks,input_ids,mode='news')
+    train_dataloader, validation_dataloader = vector_to_input(news_df,attention_masks,input_ids,'news',tokenizer)
 
     return X_train, Y_train, X_val, Y_val, \
            train_inputs, train_masks, validation_inputs, validation_masks,\
@@ -92,14 +96,14 @@ def get_comments_data():
 
     print('Length of comments:', len(comments_df))
 
-    attention_masks, input_ids = vectorize(comments_df.comment_text.values,MAX_LEN=32)
+    attention_masks, input_ids = vectorize(comments_df.comment_text.values,tokenizer, MAX_LEN=32)
     comments_df.assign(attention_mask=attention_masks,
                        input_id=input_ids.tolist())
 
 
     X_train, Y_train, X_val, Y_val, \
     train_inputs, train_masks, validation_inputs, validation_masks,\
-    train_dataloader, validation_dataloader = vector_to_input(comments_df,attention_masks,input_ids,mode='comments')
+    train_dataloader, validation_dataloader = vector_to_input(comments_df,attention_masks,input_ids,'comments',tokenizer)
 
     return X_train, Y_train, X_val, Y_val, \
            train_inputs, train_masks, validation_inputs, validation_masks,\
@@ -108,16 +112,20 @@ def get_comments_data():
 # ========================================
 #             Helper Functions
 # ========================================
-def vectorize(text,MAX_LEN=MAX_LEN):
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
-
+def vectorize(text,tokenizer,MAX_LEN=MAX_LEN):
     input_ids = []
     for t in text:
         # so basically encode tokenizing , mapping sentences to thier token ids after adding special tokens.
-        encoded_sent = tokenizer.encode(
-            t,  # Sentence which are encoding.
-            add_special_tokens=True,  # Adding special tokens '[CLS]' and '[SEP]'
-        )
+        try:
+            encoded_sent = tokenizer.encode(
+                t,  # Sentence which are encoding.
+                add_special_tokens=True,  # Adding special tokens '[CLS]' and '[SEP]'
+            )
+        except:
+            encoded_sent = encoded_sent = tokenizer.encode(
+                'nan',  # Sentence which are encoding.
+                add_special_tokens=True,  # Adding special tokens '[CLS]' and '[SEP]'
+            )
         input_ids.append(encoded_sent)
 
     input_ids = pad_sequences(input_ids, maxlen=MAX_LEN , truncating="post", padding="post")
@@ -133,8 +141,7 @@ def vectorize(text,MAX_LEN=MAX_LEN):
 
     return attention_masks, input_ids
 
-def single_word_vec(word):
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+def single_word_vec(word,tokenizer):
     encoded_sent = tokenizer.encode(
         word,  # Sentence which are encoding.
         add_special_tokens=True,  # Adding special tokens '[CLS]' and '[SEP]'
@@ -144,8 +151,9 @@ def single_word_vec(word):
 
     return encoded_sent
 
-def vector_to_input(df,attention_masks,input_ids,mode):
+def vector_to_input(df,attention_masks,input_ids,mode,tokenizer):
     labels = df.label.values
+    print('Old Labels Count:', np.bincount(labels))
 
     if mode=='news':
         # X index: input_id, topic, author
@@ -155,12 +163,25 @@ def vector_to_input(df,attention_masks,input_ids,mode):
             if a == 0:
                 author.append([0,0,0,0,0])
             else:
-                vec = single_word_vec(a)
+                vec = single_word_vec(a,tokenizer)
                 author.append(vec)
         for i in range(0,len(df)):
             temp[i].extend(author[i])
             temp[i].append(int(df['topic'][i]))
         X = np.array(temp)
+
+        print('Dealing with imbalanced...')
+
+        over = SMOTE(sampling_strategy=0.4, random_state=1)
+        under = RandomUnderSampler(sampling_strategy=0.6, random_state=1)
+        resample = [('over', over), ('under', under)]
+        pipeline = Pipeline(steps=resample)
+
+        input_ids, _ = pipeline.fit_resample(input_ids, labels)
+        attention_masks, _ = pipeline.fit_resample(attention_masks, labels)
+        X, labels = pipeline.fit_resample(X, labels)
+
+        print('New Labels Count:', np.bincount(labels))
 
     elif mode=='comments':
         # X index: input_id, comment_author, comment_score, comment_subreddit
@@ -170,20 +191,21 @@ def vector_to_input(df,attention_masks,input_ids,mode):
             if a == 0:
                 author.append([0,0,0,0,0])
             else:
-                vec = single_word_vec(a)
+                vec = single_word_vec(a,tokenizer)
                 author.append(vec)
         subreddit = []
         for s in df['comment_subreddit'].fillna(0):
             if s == 0:
                 subreddit.append([0, 0, 0, 0, 0])
             else:
-                vec = single_word_vec(s)
+                vec = single_word_vec(s,tokenizer)
                 subreddit.append(vec)
         for i in range(0, len(df)):
             temp[i].extend(author[i])
             temp[i].extend(subreddit[i])
             temp[i].append(int(df['comment_score'][i]))
         X = np.array(temp)
+
 
     train_inputs, validation_inputs, train_labels, validation_labels = train_test_split(input_ids, labels)
 
