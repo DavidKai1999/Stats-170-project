@@ -231,7 +231,11 @@ def foresttrain(X_train, Y_train, model_name):
     :param X_train:
     :param Y_train:
     '''
-    forest = RandomForestClassifier(n_estimators=10, n_jobs=3) #n_job is n of CPU cores assigned
+    forest = RandomForestClassifier(n_estimators=30,
+                                        n_jobs=3,
+                                        max_depth = 80,
+                                        min_samples_split=3,
+                                        max_features='auto')) #n_job is n of CPU cores assigned
     forest.fit(X_train, Y_train)
     dump(forest, model_name)
 
@@ -247,7 +251,7 @@ def forest_predict(X_val, model_name):
     return forest_prediction
 
 def lrtrain(X_train, Y_train, model_name):
-    lr = LogisticRegression(n_jobs=5)
+    lr = LogisticRegression(class_weight='balanced',n_jobs=3)
     lr.fit(X_train, Y_train)
     dump(lr,model_name)
 
