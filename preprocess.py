@@ -36,8 +36,8 @@ def import_data():
     Query = "SELECT * FROM topic"
     topic = pd.read_sql_query(Query, con=engine)
 
-    reddit_sample = news_table.sample(n=1000, random_state=1)
-    factcheck_sample = factcheck.sample(n=100, random_state=1)
+    reddit_sample = news_table#.sample(n=100, random_state=1)
+    factcheck_sample = factcheck#.sample(n=10, random_state=1)
 
     # ========================================
     #             Combine Table

@@ -43,8 +43,9 @@ def bertpretrain(train_dataloader, validation_dataloader,mode,MAX_LEN=MAX_LEN):
                 output_hidden_states=False,
             )
 
-        # Running the model on GPU.
-    # model.cuda()
+    # Running the model on GPU.
+    if torch.cuda.is_available():
+        model.cuda()
 
     # Running on GPU if available, otherwise on CPU
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
