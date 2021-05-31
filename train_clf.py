@@ -9,12 +9,13 @@ from sklearn import preprocessing
 def main():
 
     with open("news_data.txt", "rb") as fp:  # Pickling
-        X_train, Y_train, X_val, Y_val = pickle.load(fp)
+        X_train, Y_train, X_test, Y_test, X_val, Y_val = pickle.load(fp)
 
     #with open("comments_data.txt", "rb") as fp:  # Pickling
     #    X_train_c, Y_train_c, X_val_c, Y_val_c = pickle.load(fp)
 
     labels = Y_train.tolist().copy()
+    labels.extend(Y_test.tolist())
     labels.extend(Y_val.tolist())
 
     neg = labels.count(0)

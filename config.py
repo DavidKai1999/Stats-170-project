@@ -7,13 +7,13 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=Tru
 seed_val = 1 # random seed for training
 
 # Cross Validation
-n_split = 5 # total splits of k-folds
+n_split = 6 # total splits of k-folds
 k_index = 4 # get a specific index in k-folds result; value should be in range(0,n_split)
 
 # BertForSequenceClassification
 MAX_LEN = 128 # input_ids max_length of news
 batch_size = 16
-epochs = 10
+epochs = 1
 checkpoint = 3
 n_jobs = 2 # num of labels
 

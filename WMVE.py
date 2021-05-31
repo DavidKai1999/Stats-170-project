@@ -207,18 +207,19 @@ def comments_voting(mode='train'):
     resample = [('over', over), ('under', under)]
     pipeline = Pipeline(steps=resample)
 
-    news_index, _ = pipeline.fit_resample(news_index.reshape(-1, 1), labels)
+    news_index, labels = pipeline.fit_resample(news_index.reshape(-1, 1), labels)
 
     result = []
     comment_result = []
     comment_label = []
-    train_index, validation_index, train_label, val_label = train_test_split(news_index, labels)
+    train_index, validation_index, train_label, val_label = k_fold_split(news_index, labels)
+    train_index, test_index, train_label, test_label = train_test_split(train_index, train_label, random_state=1, test_size=0.2)
 
     has_comment_index = relationship.news_index.values
 
     track = 0
     if mode=='train':
-        for i in train_index:
+        for i in test_index:
             if i in has_comment_index:
                 comments = comments_df[comments_df['news_index'] == i[0]].reset_index(drop=True)
                 commentvote = voting_for_one_news(comments, tokenizer)

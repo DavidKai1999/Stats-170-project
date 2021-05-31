@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from model import *
 from config import *
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, train_test_split
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
@@ -36,8 +36,8 @@ def import_data():
     Query = "SELECT * FROM topic"
     topic = pd.read_sql_query(Query, con=engine)
 
-    reddit_sample = news_table#.sample(n=100, random_state=1)
-    factcheck_sample = factcheck#.sample(n=10, random_state=1)
+    reddit_sample = news_table.sample(n=300, random_state=1)
+    factcheck_sample = factcheck.sample(n=30, random_state=1)
 
     # ========================================
     #             Combine Table
@@ -83,11 +83,11 @@ def get_news_data():
 
 
     X_train, Y_train, X_val, Y_val, \
-    train_inputs, train_masks, validation_inputs, validation_masks,\
+    X_test, Y_test, test_dataloader,\
     train_dataloader, validation_dataloader = vector_to_input(news_df,attention_masks,input_ids,'news',tokenizer)
 
     return X_train, Y_train, X_val, Y_val, \
-           train_inputs, train_masks, validation_inputs, validation_masks,\
+           X_test, Y_test, test_dataloader,\
            train_dataloader, validation_dataloader
 
 def get_comments_data():
@@ -102,11 +102,11 @@ def get_comments_data():
 
 
     X_train, Y_train, X_val, Y_val, \
-    train_inputs, train_masks, validation_inputs, validation_masks,\
+    X_test, Y_test, test_dataloader,\
     train_dataloader, validation_dataloader = vector_to_input(comments_df,attention_masks,input_ids,'comments',tokenizer)
 
     return X_train, Y_train, X_val, Y_val, \
-           train_inputs, train_masks, validation_inputs, validation_masks,\
+           X_test, Y_test, test_dataloader,\
            train_dataloader, validation_dataloader
 
 # ========================================
@@ -207,20 +207,29 @@ def vector_to_input(df,attention_masks,input_ids,mode,tokenizer):
         X = np.array(temp)
 
 
-    train_inputs, validation_inputs, train_labels, validation_labels = train_test_split(input_ids, labels)
+    train_inputs, validation_inputs, train_labels, validation_labels = k_fold_split(input_ids, labels)
+    train_inputs, test_inputs, _, _ = train_test_split(train_inputs,train_labels,
+                                                          random_state=1, test_size=0.2)
 
-    train_masks, validation_masks, _, _ = train_test_split(attention_masks, labels)
+    train_masks, validation_masks, _, _ = k_fold_split(attention_masks, labels)
+    train_masks, test_masks, _, _ = train_test_split(train_masks, train_labels,
+                                                          random_state=1, test_size=0.2)
 
-    train_X, val_X, _, _ = train_test_split(X, labels)
+    train_X, val_X, _, _ = k_fold_split(X, labels)
+    train_X, test_X, train_labels, test_labels = train_test_split(train_X, train_labels,
+                                                     random_state=1, test_size=0.2)
 
     # changing the numpy arrays into tensors for working on GPU.
     train_inputs = torch.tensor(train_inputs)
+    test_inputs = torch.tensor(test_inputs)
     validation_inputs = torch.tensor(validation_inputs)
 
     train_labels = torch.tensor(train_labels)
+    test_labels = torch.tensor(test_labels)
     validation_labels = torch.tensor(validation_labels)
 
     train_masks = torch.tensor(train_masks)
+    test_masks = torch.tensor(test_masks)
     validation_masks = torch.tensor(validation_masks)
 
     # DataLoader for our training set.
@@ -228,13 +237,18 @@ def vector_to_input(df,attention_masks,input_ids,mode,tokenizer):
     train_sampler = RandomSampler(train_data)
     train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=batch_size)
 
+    # DataLoader for our testing set.
+    test_data = TensorDataset(test_inputs, test_masks, test_labels)
+    test_sampler = RandomSampler(test_data)
+    test_dataloader = DataLoader(test_data, sampler=test_sampler, batch_size=batch_size)
+
     # DataLoader for our validation(test) set.
     validation_data = TensorDataset(validation_inputs, validation_masks, validation_labels)
     validation_sampler = SequentialSampler(validation_data)
     validation_dataloader = DataLoader(validation_data, sampler=validation_sampler, batch_size=batch_size)
 
     return train_X, train_labels, val_X, validation_labels, \
-           train_inputs, train_masks, validation_inputs, validation_masks,\
+           test_X, test_labels, test_dataloader,\
            train_dataloader, validation_dataloader
 
 
@@ -244,7 +258,7 @@ def pad_infinite(iterable, padding=None):
 def pad(iterable, size, padding=None):
    return islice(pad_infinite(iterable, padding), size)
 
-def train_test_split(X, Y, index=k_index, n_split=n_split):
+def k_fold_split(X, Y, index=k_index, n_split=n_split):
     kf = KFold(n_splits=n_split,shuffle=True,random_state=1)
 
     X_trains = []

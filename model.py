@@ -283,7 +283,7 @@ def forest_predict(X_val, model_name):
     accuracy_score(Y_val, forest_prediction)
     '''
     forest = load(model_name)
-    forest_prediction = forest.predict(X_val)
+    forest_prediction = forest.predict(newdata=X_val)
     return forest_prediction
 
 def lrtrain(X_train, Y_train, model_name,class_weight):
