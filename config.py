@@ -13,18 +13,18 @@ k_index = 4 # get a specific index in k-folds result; value should be in range(0
 # BertForSequenceClassification
 MAX_LEN = 128 # input_ids max_length of news
 batch_size = 16
-epochs = 1
+epochs = 10
 checkpoint = 3
 n_jobs = 2 # num of labels
 
 # Save Models
-save_news_model = Path('.\\newsbertmodel.h5') # save news bert model
-save_comment_model = Path('.\\commentbertmodel.h5') # save comment bert model
+save_news_model = Path('.\\modelfile\\newsbertmodel.h5') # save news bert model
+save_comment_model = Path('.\\modelfile\\commentbertmodel.h5') # save comment bert model
 
-forest_news_model = 'model_forest.joblib'
-nb_news_model = 'model_nb.joblib'
-lr_news_model = 'model_lr.joblib'
+forest_news_model = '.\\modelfile\\model_forest.joblib'
+nb_news_model = '.\\modelfile\\model_nb.joblib'
+lr_news_model = '.\\modelfile\\model_lr.joblib'
 
-forest_comment_model = 'model_forest_c.joblib'
-nb_comment_model = 'model_nb_c.joblib'
-lr_comment_model = 'model_lr_c.joblib'
+forest_comment_model = '.\\modelfile\\model_forest_c.joblib'
+nb_comment_model = '.\\modelfile\\model_nb_c.joblib'
+lr_comment_model = '.\\modelfile\\model_lr_c.joblib'

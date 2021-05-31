@@ -8,7 +8,7 @@ from sklearn import preprocessing
 
 def main():
 
-    with open("news_data.txt", "rb") as fp:  # Pickling
+    with open(".\\tempfile\\news_data.txt", "rb") as fp:  # Pickling
         X_train, Y_train, X_test, Y_test, X_val, Y_val = pickle.load(fp)
 
     #with open("comments_data.txt", "rb") as fp:  # Pickling

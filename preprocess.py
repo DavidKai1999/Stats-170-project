@@ -36,8 +36,8 @@ def import_data():
     Query = "SELECT * FROM topic"
     topic = pd.read_sql_query(Query, con=engine)
 
-    reddit_sample = news_table.sample(n=300, random_state=1)
-    factcheck_sample = factcheck.sample(n=30, random_state=1)
+    reddit_sample = news_table#.sample(n=300, random_state=1)
+    factcheck_sample = factcheck#.sample(n=30, random_state=1)
 
     # ========================================
     #             Combine Table
@@ -96,7 +96,7 @@ def get_comments_data():
 
     print('Length of comments:', len(comments_df))
 
-    attention_masks, input_ids = vectorize(comments_df.comment_text.values,tokenizer, MAX_LEN=32)
+    attention_masks, input_ids = vectorize(comments_df.comment_text.values,tokenizer, MAX_LEN=20)
     comments_df.assign(attention_mask=attention_masks,
                        input_id=input_ids.tolist())
 
@@ -181,56 +181,86 @@ def vector_to_input(df,attention_masks,input_ids,mode,tokenizer):
         attention_masks, _ = pipeline.fit_resample(attention_masks, labels)
         X, labels = pipeline.fit_resample(X, labels)
 
+        train_inputs, validation_inputs, train_labels, validation_labels = k_fold_split(input_ids, labels)
+        train_inputs, test_inputs, _, _ = train_test_split(train_inputs, train_labels,
+                                                           random_state=1, test_size=0.2)
+
+        train_masks, validation_masks, _, _ = k_fold_split(attention_masks, labels)
+        train_masks, test_masks, _, _ = train_test_split(train_masks, train_labels,
+                                                         random_state=1, test_size=0.2)
+
+        train_X, val_X, _, _ = k_fold_split(X, labels)
+        train_X, test_X, train_labels, test_labels = train_test_split(train_X, train_labels, random_state=1,
+                                                                      test_size=0.2)
+
+        # changing the numpy arrays into tensors for working on GPU.
+        train_inputs = torch.tensor(train_inputs)
+        test_inputs = torch.tensor(test_inputs)
+        validation_inputs = torch.tensor(validation_inputs)
+
+        train_labels = torch.tensor(train_labels)
+        test_labels = torch.tensor(test_labels)
+        validation_labels = torch.tensor(validation_labels)
+
+        train_masks = torch.tensor(train_masks)
+        test_masks = torch.tensor(test_masks)
+        validation_masks = torch.tensor(validation_masks)
+
         print('New Labels Count:', np.bincount(labels))
 
     elif mode=='comments':
         # X index: input_id, comment_author, comment_score, comment_subreddit
         temp = input_ids.tolist()
+        mask = attention_masks
         author = []
+        author_mask = []
         for a in df['comment_author'].fillna(0):
             if a == 0:
                 author.append([0,0,0,0,0])
+                author_mask.append([0,0,0,0,0])
             else:
                 vec = single_word_vec(a,tokenizer)
                 author.append(vec)
+                author_mask.append([1, 1, 1, 1, 1])
         subreddit = []
+        subreddit_mask = []
         for s in df['comment_subreddit'].fillna(0):
             if s == 0:
                 subreddit.append([0, 0, 0, 0, 0])
+                subreddit_mask.append([0, 0, 0, 0, 0])
             else:
                 vec = single_word_vec(s,tokenizer)
                 subreddit.append(vec)
+                subreddit_mask.append([1, 1, 1, 1, 1])
         for i in range(0, len(df)):
             temp[i].extend(author[i])
+            mask[i].extend(author_mask[i])
             temp[i].extend(subreddit[i])
-            temp[i].append(int(df['comment_score'][i]))
+            mask[i].extend(subreddit_mask[i])
         X = np.array(temp)
+        X_mask = np.array(mask)
 
+        train_X_mask, val_X_mask, train_labels, validation_labels = k_fold_split(X_mask, labels)
+        train_X_mask, test_X_mask, _, _ = train_test_split(train_X_mask, train_labels,
+                                                                                random_state=1, test_size=0.2)
 
-    train_inputs, validation_inputs, train_labels, validation_labels = k_fold_split(input_ids, labels)
-    train_inputs, test_inputs, _, _ = train_test_split(train_inputs,train_labels,
-                                                          random_state=1, test_size=0.2)
+        train_X, val_X, _, _ = k_fold_split(X, labels)
+        train_X, test_X, train_labels, test_labels = train_test_split(train_X, train_labels, random_state=1,
+                                                                      test_size=0.2)
 
-    train_masks, validation_masks, _, _ = k_fold_split(attention_masks, labels)
-    train_masks, test_masks, _, _ = train_test_split(train_masks, train_labels,
-                                                          random_state=1, test_size=0.2)
+        # changing the numpy arrays into tensors for working on GPU.
+        train_inputs = torch.tensor(train_X)
+        test_inputs = torch.tensor(test_X)
+        validation_inputs = torch.tensor(val_X)
 
-    train_X, val_X, _, _ = k_fold_split(X, labels)
-    train_X, test_X, train_labels, test_labels = train_test_split(train_X, train_labels,
-                                                     random_state=1, test_size=0.2)
+        train_labels = torch.tensor(train_labels)
+        test_labels = torch.tensor(test_labels)
+        validation_labels = torch.tensor(validation_labels)
 
-    # changing the numpy arrays into tensors for working on GPU.
-    train_inputs = torch.tensor(train_inputs)
-    test_inputs = torch.tensor(test_inputs)
-    validation_inputs = torch.tensor(validation_inputs)
+        train_masks = torch.tensor(train_X_mask)
+        test_masks = torch.tensor(test_X_mask)
+        validation_masks = torch.tensor(val_X_mask)
 
-    train_labels = torch.tensor(train_labels)
-    test_labels = torch.tensor(test_labels)
-    validation_labels = torch.tensor(validation_labels)
-
-    train_masks = torch.tensor(train_masks)
-    test_masks = torch.tensor(test_masks)
-    validation_masks = torch.tensor(validation_masks)
 
     # DataLoader for our training set.
     train_data = TensorDataset(train_inputs, train_masks, train_labels)

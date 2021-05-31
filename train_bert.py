@@ -65,30 +65,28 @@ def bertpredict_withbatch(dataloader,model):
 
     return result
 
-
 X_train, Y_train, X_val, Y_val, \
 X_test, Y_test, test_dataloader,\
 train_dataloader,val_dataloader = get_news_data()
 
 print('Saving...')
-with open("news_data.txt", "wb") as fp:  # Pickling
+with open(".\\tempfile\\news_data.txt", "wb") as fp:  # Pickling
     pickle.dump([X_train, Y_train, X_test, Y_test, X_val, Y_val], fp)
 
 
-bertpretrain(train_dataloader, val_dataloader,'news')
+#bertpretrain(train_dataloader, val_dataloader,'news')
 
 bertnews = torch.load(save_news_model)
 bert_news_train = bertpredict_withbatch(train_dataloader,bertnews)
 bert_news_test = bertpredict_withbatch(test_dataloader,bertnews)
 bert_news_val = bertpredict_withbatch(val_dataloader,bertnews)
 
-with open("news_train_pred.txt", "wb") as fp:  # Pickling
+with open(".\\tempfile\\news_train_pred.txt", "wb") as fp:  # Pickling
     pickle.dump(bert_news_train, fp)
-with open("news_test_pred.txt", "wb") as fp:  # Pickling
+with open(".\\tempfile\\news_test_pred.txt", "wb") as fp:  # Pickling
     pickle.dump(bert_news_test, fp)
-with open("news_val_pred.txt", "wb") as fp:  # Pickling
+with open(".\\tempfile\\news_val_pred.txt", "wb") as fp:  # Pickling
     pickle.dump(bert_news_val, fp)
-
 
 # train bert model, model save in 'news/comments + bertmodel.h5'
 X_train_c, Y_train_c, X_val_c, Y_val_c,\
@@ -96,7 +94,7 @@ X_test_c, Y_test_c, test_dataloader_c,\
 train_dataloader_c,val_dataloader_c = get_comments_data()
 
 print('Saving...')
-with open("comments_data.txt", "wb") as fp:  # Pickling
+with open(".\\tempfile\\comments_data.txt", "wb") as fp:  # Pickling
     pickle.dump([X_train_c, Y_train_c, X_test_c, Y_test_c, X_val_c, Y_val_c], fp)
 
 bertpretrain(train_dataloader_c, val_dataloader_c,'comment')
@@ -106,11 +104,11 @@ bert_comments_train = bertpredict_withbatch(train_dataloader_c,bertcomment)
 bert_comments_test = bertpredict_withbatch(test_dataloader_c,bertcomment)
 bert_comments_val = bertpredict_withbatch(val_dataloader_c,bertcomment)
 
-with open("comments_train_pred.txt", "wb") as fp:  # Pickling
+with open(".\\tempfile\\comments_train_pred.txt", "wb") as fp:  # Pickling
     pickle.dump(bert_comments_train, fp)
-with open("comments_test_pred.txt", "wb") as fp:  # Pickling
+with open(".\\tempfile\\comments_test_pred.txt", "wb") as fp:  # Pickling
     pickle.dump(bert_comments_test, fp)
-with open("comments_val_pred.txt", "wb") as fp:  # Pickling
+with open(".\\tempfile\\comments_val_pred.txt", "wb") as fp:  # Pickling
     pickle.dump(bert_comments_val, fp)
 
 print('Done!')
