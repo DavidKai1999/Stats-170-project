@@ -1,20 +1,18 @@
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
-import matplotlib.pyplot as plt
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
 from transformers import BertForSequenceClassification, AdamW
-
 from transformers import get_linear_schedule_with_warmup
+
 import time
 import datetime
 import random
 import numpy as np
 from joblib import dump, load
-
 
 # parameters for training
 from config import *
@@ -48,8 +46,6 @@ def bertpretrain(train_dataloader, validation_dataloader,mode,MAX_LEN=MAX_LEN):
         model.cuda()
 
     # Running on GPU if available, otherwise on CPU
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
     optimizer = AdamW(model.parameters(),
                       lr = 2e-5,
                       eps = 1e-8
@@ -227,7 +223,6 @@ def bertpredict(model,inputs,masks):
     dataloader = DataLoader(validation_data, batch_size=32)
 
     # Running on GPU if available, otherwise on CPU
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     result = []
 
@@ -283,7 +278,7 @@ def forest_predict(X_val, model_name):
     accuracy_score(Y_val, forest_prediction)
     '''
     forest = load(model_name)
-    forest_prediction = forest.predict(X_val)
+    forest_prediction = forest.predict(newdata=X_val)
     return forest_prediction
 
 def lrtrain(X_train, Y_train, model_name,class_weight):

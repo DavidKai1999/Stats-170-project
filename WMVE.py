@@ -155,7 +155,7 @@ def train_weight(preds, label, num=4,final = False):
 
         total_weight2 = sum(weight2)
         for j in range(0, num+1):
-            weight2[j] = weight2[j]  / total_weight2
+            weight2[j] = weight2[j] / total_weight2
 
         return weight1, weight2
 
@@ -192,8 +192,7 @@ def train_weight(preds, label, num=4,final = False):
             weight[j] = weight[j] /total_weight
         return weight
 
-def comments_voting(mode='train'):
-    #news_df, comments_df, relationship = import_data()
+def comments_voting(mode='test'):
 
     news_df = pd.read_csv('temp_news_df.csv')
     comments_df = pd.read_csv('temp_comments_df.csv')
@@ -207,18 +206,31 @@ def comments_voting(mode='train'):
     resample = [('over', over), ('under', under)]
     pipeline = Pipeline(steps=resample)
 
-    news_index, _ = pipeline.fit_resample(news_index.reshape(-1, 1), labels)
+    news_index, labels = pipeline.fit_resample(news_index.reshape(-1, 1), labels)
 
     result = []
     comment_result = []
     comment_label = []
-    train_index, validation_index, train_label, val_label = train_test_split(news_index, labels)
+    train_index, validation_index, train_label, val_label = k_fold_split(news_index, labels)
+    train_index, test_index, train_label, test_label = train_test_split(train_index, train_label, random_state=1, test_size=0.2)
 
     has_comment_index = relationship.news_index.values
 
     track = 0
     if mode=='train':
         for i in train_index:
+            if i in has_comment_index:
+                comments = comments_df[comments_df['news_index'] == i[0]].reset_index(drop=True)
+                commentvote = voting_for_one_news(comments, tokenizer)
+                result.append(commentvote)
+                comment_result.append(commentvote)
+                comment_label.append(labels[track])
+            else:
+                result.append(2)
+            track += 1
+        binary_eval_comment('comment_train', comment_label, comment_result)
+    elif mode=='test':
+        for i in test_index:
             if i in has_comment_index:
                 comments = comments_df[comments_df['news_index'] == i[0]].reset_index(drop=True)
                 commentvote = voting_for_one_news(comments, tokenizer)
@@ -245,52 +257,12 @@ def comments_voting(mode='train'):
 
 def voting_for_one_news(df,tokenizer):
     attention_masks, input_ids = vectorize(df.comment_text.values,tokenizer, MAX_LEN=32)
-    '''
-    temp = input_ids.tolist()
-    author = []
-    for a in df['comment_author'].fillna(0):
-        if a == 0:
-            author.append([0,0,0,0,0])
-        else:
-            vec = single_word_vec(a,tokenizer)
-            author.append(vec)
-    subreddit = []
-    for s in df['comment_subreddit'].fillna(0):
-        if s == 0:
-            subreddit.append([0, 0, 0, 0, 0])
-        else:
-            vec = single_word_vec(s,tokenizer)
-            subreddit.append(vec)
-    for i in range(0, len(df)):
-        temp[i].extend(author[i])
-        temp[i].extend(subreddit[i])
-        temp[i].append(int(df['comment_score'][i]))
-    X = np.array(temp)
-
-
-    bert_c = torch.load(save_comment_model)
-    forest_c = load(forest_comment_model)
-    nb_c = load(nb_comment_model)
-    lr_c = load(lr_comment_model)
-    '''
 
     input_ids = torch.tensor(input_ids)
     attention_masks = torch.tensor(attention_masks)
+    bert_c = torch.load(save_comment_model,map_location=device)
 
-    bert_c = torch.load(save_comment_model)
-
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     bert_train_c = bertpredict(bert_c, input_ids.to(device), attention_masks.to(device))
-    #forest_train_c= forest_c.predict(X)
-    #nb_train_c = nb_c.predict(X)
-    #lr_train_c = lr_c.predict(X)
-
-    #classfiers_pred_train_c = pd.DataFrame({'bert': bert_train_c,
-    #                                'forest': forest_train_c,
-    #                                'nb': nb_train_c,
-    #                                'lr': lr_train_c})
-
-    #voting_pred,_ = WMVEpredict([weight], classfiers_pred_train_c)
 
     votes = [0,0]
     for i in bert_train_c:
