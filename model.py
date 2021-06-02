@@ -1,20 +1,18 @@
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
-import matplotlib.pyplot as plt
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
 from transformers import BertForSequenceClassification, AdamW
-
 from transformers import get_linear_schedule_with_warmup
+
 import time
 import datetime
 import random
 import numpy as np
 from joblib import dump, load
-
 
 # parameters for training
 from config import *
@@ -48,8 +46,6 @@ def bertpretrain(train_dataloader, validation_dataloader,mode,MAX_LEN=MAX_LEN):
         model.cuda()
 
     # Running on GPU if available, otherwise on CPU
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
     optimizer = AdamW(model.parameters(),
                       lr = 2e-5,
                       eps = 1e-8
@@ -227,7 +223,6 @@ def bertpredict(model,inputs,masks):
     dataloader = DataLoader(validation_data, batch_size=32)
 
     # Running on GPU if available, otherwise on CPU
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     result = []
 
@@ -333,18 +328,3 @@ def flat_accuracy(preds, labels):
     pred_flat = np.argmax(preds, axis=1).flatten()
     labels_flat = labels.flatten()
     return np.sum(pred_flat == labels_flat) / len(labels_flat)
-
-def plot_acc_loss(acc,loss):
-    x1 = range(0, epochs)
-    x2 = range(0, epochs)
-    y1 = acc
-    y2 = loss
-    plt.subplot(2, 1, 1)
-    plt.plot(x1, y1, 'o-')
-    plt.title('Test accuracy vs. epoches')
-    plt.ylabel('Test accuracy')
-    plt.subplot(2, 1, 2)
-    plt.plot(x2, y2, '.-')
-    plt.xlabel('Test loss vs. epoches')
-    plt.ylabel('Test loss')
-    plt.show()

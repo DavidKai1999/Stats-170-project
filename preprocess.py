@@ -10,7 +10,6 @@ from keras.preprocessing.sequence import pad_sequences
 
 from itertools import chain, repeat, islice
 
-
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.pipeline import Pipeline
@@ -36,8 +35,8 @@ def import_data():
     Query = "SELECT * FROM topic"
     topic = pd.read_sql_query(Query, con=engine)
 
-    reddit_sample = news_table#.sample(n=300, random_state=1)
-    factcheck_sample = factcheck#.sample(n=30, random_state=1)
+    reddit_sample = news_table.sample(n=10000, random_state=1)
+    factcheck_sample = factcheck.sample(n=1000, random_state=1)
 
     # ========================================
     #             Combine Table

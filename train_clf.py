@@ -11,9 +11,6 @@ def main():
     with open(".\\tempfile\\news_data.txt", "rb") as fp:  # Pickling
         X_train, Y_train, X_test, Y_test, X_val, Y_val = pickle.load(fp)
 
-    #with open("comments_data.txt", "rb") as fp:  # Pickling
-    #    X_train_c, Y_train_c, X_val_c, Y_val_c = pickle.load(fp)
-
     labels = Y_train.tolist().copy()
     labels.extend(Y_test.tolist())
     labels.extend(Y_val.tolist())
@@ -34,11 +31,6 @@ def main():
     #                Classifiers
     # ========================================
 
-    # train bert model, model save in 'news/comments + bertmodel.h5'
-    #bertpretrain(train_dataloader, validation_dataloader,'news')
-    #bertpretrain(comment_train, comment_val,'comment')
-
-
     # train other model (random forest / SVM / Naive Bayes/ ... )
 
     X = X_train.copy()
@@ -49,10 +41,6 @@ def main():
     foresttrain(X_train, Y_train, forest_news_model,class_weight)
     nbtrain(X_train_1, Y_train, nb_news_model)
     lrtrain(X_train_1, Y_train, lr_news_model,class_weight)
-
-    #foresttrain(X_train_c, Y_train_c, forest_comment_model)
-    #nbtrain(X_train_c, Y_train_c, nb_comment_model)
-    #lrtrain(X_train_c, Y_train_c, lr_comment_model)
 
     print('Classifiers Training Complete!')
 

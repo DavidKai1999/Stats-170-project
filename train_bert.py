@@ -74,9 +74,9 @@ with open(".\\tempfile\\news_data.txt", "wb") as fp:  # Pickling
     pickle.dump([X_train, Y_train, X_test, Y_test, X_val, Y_val], fp)
 
 
-#bertpretrain(train_dataloader, val_dataloader,'news')
+bertpretrain(train_dataloader, val_dataloader,'news')
 
-bertnews = torch.load(save_news_model)
+bertnews = torch.load(save_news_model,map_location=device)
 bert_news_train = bertpredict_withbatch(train_dataloader,bertnews)
 bert_news_test = bertpredict_withbatch(test_dataloader,bertnews)
 bert_news_val = bertpredict_withbatch(val_dataloader,bertnews)
@@ -98,17 +98,5 @@ with open(".\\tempfile\\comments_data.txt", "wb") as fp:  # Pickling
     pickle.dump([X_train_c, Y_train_c, X_test_c, Y_test_c, X_val_c, Y_val_c], fp)
 
 bertpretrain(train_dataloader_c, val_dataloader_c,'comment')
-
-bertcomment = torch.load(save_comment_model)
-bert_comments_train = bertpredict_withbatch(train_dataloader_c,bertcomment)
-bert_comments_test = bertpredict_withbatch(test_dataloader_c,bertcomment)
-bert_comments_val = bertpredict_withbatch(val_dataloader_c,bertcomment)
-
-with open(".\\tempfile\\comments_train_pred.txt", "wb") as fp:  # Pickling
-    pickle.dump(bert_comments_train, fp)
-with open(".\\tempfile\\comments_test_pred.txt", "wb") as fp:  # Pickling
-    pickle.dump(bert_comments_test, fp)
-with open(".\\tempfile\\comments_val_pred.txt", "wb") as fp:  # Pickling
-    pickle.dump(bert_comments_val, fp)
 
 print('Done!')

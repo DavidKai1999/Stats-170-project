@@ -1,6 +1,9 @@
 
 from pathlib import Path
 from transformers import BertTokenizer
+import torch
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
 
