@@ -89,8 +89,6 @@ def validate(X_val,X_val_1,Y_val):
     with open(".\\tempfile\\voting_weight.txt", "rb") as fp:  # Unpickling
         weight = pickle.load(fp)
 
-    #with open("comment_weight.txt", "rb") as fp:  # Unpickling
-    #    weight_c = pickle.load(fp)
 
     print('Validating...')
 

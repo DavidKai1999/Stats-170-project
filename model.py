@@ -328,3 +328,18 @@ def flat_accuracy(preds, labels):
     pred_flat = np.argmax(preds, axis=1).flatten()
     labels_flat = labels.flatten()
     return np.sum(pred_flat == labels_flat) / len(labels_flat)
+
+def plot_acc_loss(acc,loss):
+    x1 = range(0, epochs)
+    x2 = range(0, epochs)
+    y1 = acc
+    y2 = loss
+    plt.subplot(2, 1, 1)
+    plt.plot(x1, y1, 'o-')
+    plt.title('Test accuracy vs. epoches')
+    plt.ylabel('Test accuracy')
+    plt.subplot(2, 1, 2)
+    plt.plot(x2, y2, '.-')
+    plt.xlabel('Test loss vs. epoches')
+    plt.ylabel('Test loss')
+    plt.show()
