@@ -71,4 +71,4 @@
   
   Then, the script repeats similar steps to get all models' predictions for the validation set. These predictions will be combined and used for generating the weighted voting prediction result. 
   
-  (All predictions mentioned here will be compared to the true label and print message for evaluating the models' performance.)
+  (All predictions mentioned here will be compared to the true labels to evaluate the models' performance. The evaluation message will be printed when running this script.)
