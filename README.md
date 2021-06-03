@@ -57,7 +57,7 @@
 
 - **WMVE.py**
 
-  This is the script where we implement the weighted majority voting algorithm. It contains the functions for training votes, getting comments voting prediction (the way to do so is explained in our final report), and generating the weighted voting results. 
+  This is the script where we implement the weighted majority voting algorithm. It contains the functions for calculaitng voting weights, getting comments voting prediction (the way to do so is explained in our final report), and generating the weighted voting results. 
 
 - **evaluation.py**
 
