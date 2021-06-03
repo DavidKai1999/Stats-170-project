@@ -31,3 +31,5 @@ lr_news_model = '.\\modelfile\\model_lr.joblib'
 forest_comment_model = '.\\modelfile\\model_forest_c.joblib'
 nb_comment_model = '.\\modelfile\\model_nb_c.joblib'
 lr_comment_model = '.\\modelfile\\model_lr_c.joblib'
+
+comments_df_file = 'temp_comments_df.csv'
