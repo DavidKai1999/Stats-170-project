@@ -7,12 +7,16 @@ from preprocess import *
 from config import tokenizer
 import pickle
 
+from sklearn import preprocessing
+
 def main(news_file, comments_file,relationship_file):
+    '''
     news_df = pd.read_csv(news_file)
     comments_df = pd.read_csv(comments_file)
     relationship = pd.read_csv(relationship_file)
 
     X, Y, dataloader = embedding_news(news_df)
+
 
     bertnews = torch.load(save_news_model, map_location=device)
     bert_pred = bertpredict_withbatch(dataloader, bertnews)
@@ -20,7 +24,49 @@ def main(news_file, comments_file,relationship_file):
     with open(".\\tempfile\\bert_pred.txt", "wb") as fp:  # Pickling
         pickle.dump(bert_pred, fp)
 
-    #comments_voting_pred(news_df, comments_df, relationship_df)
+    comment_pred = comments_voting_pred(news_df, comments_df, relationship)
+
+    with open(".\\tempfile\\comment_pred.txt", "wb") as fp:  # Pickling
+        pickle.dump(comment_pred, fp)
+    '''
+
+    with open(".\\tempfile\\pred_data.txt", "rb") as fp:  # Unpickling
+        X, Y = pickle.load(fp)
+    with open(".\\tempfile\\bert_pred.txt", "rb") as fp:  # Unpickling
+        bert_pred = pickle.load(fp)
+    with open(".\\tempfile\\comment_pred.txt", "rb") as fp:  # Pickling
+        comment_pred = pickle.load(fp)
+
+    with open(".\\tempfile\\voting_weight.txt", "rb") as fp:  # Unpickling
+        weight = pickle.load(fp)  # Load the voting weights
+
+    scaler = preprocessing.StandardScaler().fit(X)
+    X_scale = scaler.transform(X)
+
+    # Load classifiers
+    forest = load(forest_news_model)
+    nb = load(nb_news_model)
+    lr = load(lr_news_model)
+
+    forest_pred = forest.predict(X)
+    nb_pred = nb.predict(X_scale)
+    lr_pred = lr.predict(X_scale)
+
+    binary_eval('bert', bert_pred, Y)
+    binary_eval('forest', forest_pred, Y)
+    binary_eval('nb', nb_pred, Y)
+    binary_eval('lr', lr_pred, Y)
+
+    # Combine all predictions to feed to the weighted voting model
+    classfiers_pred = pd.DataFrame({'bert': bert_pred,
+                                    'forest': forest_pred,
+                                    'nb': nb_pred,
+                                    'lr': lr_pred,
+                                    'comment': comment_pred})
+
+    voting_pred, prob = WMVEpredict(weight, classfiers_pred, use_softmax=False, final=True)
+
+    binary_eval('voting_val', Y, voting_pred)
 
 def embedding_news(news_df):
     news_df['text_combined'] = news_df['text'] + news_df['title'] * 2
