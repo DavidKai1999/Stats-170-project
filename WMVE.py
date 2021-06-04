@@ -224,7 +224,7 @@ def comments_voting(mode='test'):
                 commentvote = voting_for_one_news(comments, tokenizer)
                 result.append(commentvote)
                 comment_result.append(commentvote)
-                comment_label.append(labels[track])
+                comment_label.append(train_label[track])
             else:
                 result.append(2)
             track += 1
@@ -236,7 +236,7 @@ def comments_voting(mode='test'):
                 commentvote = voting_for_one_news(comments, tokenizer)
                 result.append(commentvote)
                 comment_result.append(commentvote)
-                comment_label.append(labels[track])
+                comment_label.append(test_label[track])
             else:
                 result.append(2)
             track += 1
@@ -248,7 +248,7 @@ def comments_voting(mode='test'):
                 commentvote = voting_for_one_news(comments,tokenizer)
                 result.append(commentvote)
                 comment_result.append(commentvote)
-                comment_label.append(labels[track])
+                comment_label.append(val_label[track])
             else:
                 result.append(2)
             track += 1
