@@ -228,7 +228,7 @@ def comments_voting(mode='test'):
             else:
                 result.append(2)
             track += 1
-        binary_eval_comment('comment_train', comment_label, comment_result)
+        binary_eval_comment('comment_train', comment_result,comment_label)
     elif mode=='test':
         for i in test_index:
             if i in has_comment_index:
@@ -240,7 +240,7 @@ def comments_voting(mode='test'):
             else:
                 result.append(2)
             track += 1
-        binary_eval_comment('comment_train', comment_label, comment_result)
+        binary_eval_comment('comment_train', comment_result,comment_label)
     elif mode=='val':
         for i in validation_index:
             if i in has_comment_index:
@@ -252,7 +252,7 @@ def comments_voting(mode='test'):
             else:
                 result.append(2)
             track += 1
-        binary_eval_comment('comment_val', comment_label, comment_result)
+        binary_eval_comment('comment_val', comment_result,comment_label)
     return result
 
 def voting_for_one_news(df,tokenizer):
