@@ -226,7 +226,7 @@ def comments_voting_pred(news_df, comments_df, relationship):
         else:
             result.append(2)
         track += 1
-    binary_eval_comment('comment_voting', comment_result, comment_label)
+    binary_eval_comment('comment_voting', comment_label,comment_result)
     return result
 
 if __name__ == '__main__':
