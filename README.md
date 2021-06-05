@@ -1,6 +1,24 @@
 # Stats-170-project
 
+A weighted voting model to do binary classification on the authenticity of the news.
+
 ## Running a Demo
+
+Running the whole program will take a rather long time, so we provide a demo with a small sample of data to show how to predict the authenticity of news with our models. To run the demo, please follow the steps:
+
+- **Step 1**: Clone or dowload this repository. 
+- **Step 2**: Make sure the following files exist:
+  -  Main directory: pred_comments.csv, pred_news.csv, pred_relationship.csv
+  -  modelfile folder: model_fores.joblib, model_lr.joblib, model_nb.joblib
+  -  tempfile folder: bert_pred.txt, comment_pred.txt, pred_data.txt, voting_weight.txt
+  
+  If any of these files missing, please download from the link and unzip the file to the corresponding folder (require UCI email): https://drive.google.com/file/d/1rzDj499cWGJUJve3tCWj-jAPd1lZ_cBb/view?usp=sharing
+- **Step 3**: Run **Project.ipynb**. 
+
+※Note: we also provide a **project.html** file which shows all the outputs of **Project.ipynb**.
+
+## Running the Project
+
 
 ## Scripts Introduction
 
@@ -16,14 +34,21 @@
 
 ### data_preprocessing Folder
 
-- **factcheck_prerocessing.ipynb**
+- **factcheck_preprocessing.ipynb**
 
-  In this file, we loaded the raw data of the Fact Check dataset from a CSV file. We extracted the useful information from its DataFeedElement column (all data in this column is stored as JSON dictionary) and formed a new dataset. We detect the language of all contexts in the text column. We only kept the English data and stored them in the local PostgreSQL server. Then, we visualized some features of the dataset to understand our data better.
+  We loaded the raw data of the Fact Check dataset from a CSV file. We extracted the useful information from its DataFeedElement column (all data in this column is stored as JSON dictionary) and formed a new dataset. We detect the language of all contexts in the text column. We only kept the English data and stored them in a CSV file.
+
+- **factcheck_label.ipynb**
+
+  We loaded the CSV file generated in **factcheck_preprocessing.ipynb**. We explore the labels of the Fact Check dataset and manually convert them into binary 0/1 labels. Then, we stored the data in the local PostgreSQL server and visualized some dataset features to understand our data better.
 
 - **redditcomment_prerocessing.ipynb**
 
-  In this file, we loaded the raw data of the Reddit Comment dataset from a CSV file. We transformed the data frame into 1NF and split it into two tables (news table & comments table). We stored each table in the local PostgreSQL server separately. Then, we visualized some features of the dataset to understand our data better.
+  We loaded the raw data of the Reddit Comment dataset from a CSV file. We transformed the data frame into 1NF and split it into two tables (news table & comments table). We stored each table in the local PostgreSQL server separately. Then, we visualized some features of the dataset to understand our data better.
   
+- **Topic Modeling.ipynb**
+
+  We loaded the Fact Check dataset and the Reddit Comment dataset from local PostgreSQL server and combined their news in this file. Then, we embedded these news contexts and running an LDA model to do topic modeling. We assigned the news into 15 models and did some visualization.
 
 ### Main Directory
 - **setup.sql**
@@ -72,3 +97,9 @@
   Then, the script repeats similar steps to get all models' predictions for the validation set. These predictions will be combined and used for generating the weighted voting prediction result. 
   
   (All predictions mentioned here will be compared to the true labels to evaluate the models' performance. The evaluation message will be printed when running this script.)
+
+- **prediction.py**
+  
+  This file contains all the functions for predicting news' authenticity. Before running this file, all models and the voting weights should have been trained and save under the modelfile folder; the news should be divided into a news table and a comment table saving in the main directory. The file loaded all the models and used each of them to get a prediction. Then, it loaded the voting weights and used the weights and all predictions to get the voting results.
+  
+  Our demo also imported functions from this file to do classification on the sample data.
