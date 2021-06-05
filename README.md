@@ -4,7 +4,7 @@ A weighted voting model to do binary classification on the authenticity of the n
 
 ## Running a Demo
 
-Running the whole program will take a rather long time, so we provide a demo with a small sample of data to show how to predict the authenticity of news with our models. To run the demo, please follow the steps:
+Running our whole program is very time-consuming, so we provide a demo with a small sample of data to show how to predict the authenticity of news with our models. To run the demo, please follow the steps:
 
 - **Step 1**: Clone or dowload this repository. 
 - **Step 2**: Make sure the following files exist:
@@ -19,25 +19,25 @@ Running the whole program will take a rather long time, so we provide a demo wit
 
 ## Running the Project
 
-  Here we will introduce the complete process how we train models, evaluate models, and predict on new data by the program. Before running the code, all the data have been cleaned and done with topic modeling. Both the data and the topic modeling results have been stored in the PostgreSQL server. 
+  Here we introduce the complete process of training models, evaluating models, and predicting new data by the program. Before running the code, all the data have been cleaned and done with topic modeling. Both the data and the topic modeling results have been stored in the PostgreSQL server. 
   
-  Also notice that we split the data into 6 folds and use a parameter called k_index in **Config.py** to control the fold used as the validation set. We use different k_index to run on multiple computers for doing cross-validation.
+  Also, notice that we split the data into 6 folds and use a parameter called k_index in **Config.py** to control the fold used as the validation set. We use different k_index to run on multiple computers for doing cross-validation.
   
   **Training Model**
   
   - **Step 1:** Run **train_bert.py**. 
   
-    Load data from the PostgreSQL server and split it into classifier training set, voting testing set, and validation set. All the three sets will be saved locally. Then, train and save the BFSC model by the classifier training set. 
+    Load data from the PostgreSQL server and split it into the classifier training set, voting testing set, and validation set. All three sets will be saved locally. Then, train and save the BFSC model. 
     
   - **Step 2:** Run **train_clf.py**. 
     
-    Load the classifier training set from local. Train and save the Random Forest, Naive Bayes, and Logistic Regression will be trained by the classifier training set.
+    Load the classifier training set from local. Train and save the Random Forest, Naive Bayes, and Logistic Regression models.
 
   **Evaluating Model**
   
   - Run **validation.py**.
   
-    Load models, the voting testing set, and the validation set from local. Use all models to predict labels for the voting testing set and use these predictions to calcualte voting weights. Then, use all models to predict labels for the validation set and compare with the true labels. Use these predictsion and the voting weights to gain the final voting result and compare with the true labels.
+    Load models, the voting testing set, and the validation set from local. Use all models to predict labels for the voting testing set and use these predictions to calculate voting weights. Then, use all models to predict labels for the validation set and compare them with the true labels. Use these predictions and the voting weights to gain the final voting result and compare them with the true labels.
 
   **Predicting on New Data**
   
