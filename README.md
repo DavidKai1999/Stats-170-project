@@ -15,10 +15,37 @@ Running the whole program will take a rather long time, so we provide a demo wit
   If any of these files missing, please download from the link and unzip the file to the corresponding folder (require UCI email): https://drive.google.com/file/d/1rzDj499cWGJUJve3tCWj-jAPd1lZ_cBb/view?usp=sharing
 - **Step 3**: Run **Project.ipynb**. 
 
-※Note: we also provide a **project.html** file which shows all the outputs of **Project.ipynb**.
+※Note: we also provide a **Project.html** file which shows all the outputs of **Project.ipynb**.
 
 ## Running the Project
 
+  Here we will introduce the complete process how we train models, evaluate models, and predict on new data by the program. Before running the code, all the data have been cleaned and done with topic modeling. Both the data and the topic modeling results have been stored in the PostgreSQL server. 
+  
+  Also notice that we split the data into 6 folds and use a parameter called k_index in **Config.py** to control the fold used as the validation set. We use different k_index to run on multiple computers for doing cross-validation.
+  
+  **Training Model**
+  
+  - **Step 1:** Run **train_bert.py**. 
+  
+    Load data from the PostgreSQL server and split it into classifier training set, voting testing set, and validation set. All the three sets will be saved locally. Then, train and save the BFSC model by the classifier training set. 
+    
+  - **Step 2:** Run **train_clf.py**. 
+    
+    Load the classifier training set from local. Train and save the Random Forest, Naive Bayes, and Logistic Regression will be trained by the classifier training set.
+
+  **Evaluating Model**
+  
+  - Run **validation.py**.
+  
+    Load models, the voting testing set, and the validation set from local. Use all models to predict labels for the voting testing set and use these predictions to calcualte voting weights. Then, use all models to predict labels for the validation set and compare with the true labels. Use these predictsion and the voting weights to gain the final voting result and compare with the true labels.
+
+  **Predicting on New Data**
+  
+  - **Step 1:** Divide the data into a news table and a comments table and save the two tables as CSV files.
+
+  - **Step 2:** Run **prediction.py**.
+  
+    Load the two tables and embedded the contexts. Load models and voting weights from local. Use models to predict labels for the data. Then, use these predictions and the voting weights to gain the final voting result.
 
 ## Scripts Introduction
 
@@ -48,7 +75,7 @@ Running the whole program will take a rather long time, so we provide a demo wit
   
 - **Topic Modeling.ipynb**
 
-  We loaded the Fact Check dataset and the Reddit Comment dataset from local PostgreSQL server and combined their news in this file. Then, we embedded these news contexts and running an LDA model to do topic modeling. We assigned the news into 15 models and did some visualization.
+  We loaded the Fact Check dataset and the Reddit Comment dataset from local PostgreSQL server and combined their news in this file. Then, we embedded these news contexts and running an LDA model to do topic modeling. We assigned the news into 15 models and did some visualization. The topic modeling result was also stored in the local PostgreSQL server.
 
 ### Main Directory
 - **setup.sql**
