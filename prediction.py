@@ -1,6 +1,4 @@
 
-import pandas as pd
-from sqlalchemy import create_engine
 from train_bert import bertpredict_withbatch
 from WMVE import *
 from preprocess import *
@@ -9,33 +7,18 @@ import pickle
 
 from sklearn import preprocessing
 
-def main(news_file, comments_file,relationship_file):
-    '''
-    news_df = pd.read_csv(news_file)
-    comments_df = pd.read_csv(comments_file)
-    relationship = pd.read_csv(relationship_file)
+def main():
+    news_df = pd.read_csv('pred_news.csv')
+    comments_df = pd.read_csv('pred_comments.csv')
+    relationship = pd.read_csv('pred_relationship.csv')
 
+    print('Embedding context...')
     X, Y, dataloader = embedding_news(news_df)
-
 
     bertnews = torch.load(save_news_model, map_location=device)
     bert_pred = bertpredict_withbatch(dataloader, bertnews)
 
-    with open(".\\tempfile\\bert_pred.txt", "wb") as fp:  # Pickling
-        pickle.dump(bert_pred, fp)
-
     comment_pred = comments_voting_pred(news_df, comments_df, relationship)
-
-    with open(".\\tempfile\\comment_pred.txt", "wb") as fp:  # Pickling
-        pickle.dump(comment_pred, fp)
-    '''
-
-    with open(".\\tempfile\\pred_data.txt", "rb") as fp:  # Unpickling
-        X, Y = pickle.load(fp)
-    with open(".\\tempfile\\bert_pred.txt", "rb") as fp:  # Unpickling
-        bert_pred = pickle.load(fp)
-    with open(".\\tempfile\\comment_pred.txt", "rb") as fp:  # Pickling
-        comment_pred = pickle.load(fp)
 
     with open(".\\tempfile\\voting_weight.txt", "rb") as fp:  # Unpickling
         weight = pickle.load(fp)  # Load the voting weights
@@ -48,14 +31,11 @@ def main(news_file, comments_file,relationship_file):
     nb = load(nb_news_model)
     lr = load(lr_news_model)
 
+    print('Predicting...')
+
     forest_pred = forest.predict(X)
     nb_pred = nb.predict(X_scale)
     lr_pred = lr.predict(X_scale)
-
-    binary_eval('bert', bert_pred, Y)
-    binary_eval('forest', forest_pred, Y)
-    binary_eval('nb', nb_pred, Y)
-    binary_eval('lr', lr_pred, Y)
 
     # Combine all predictions to feed to the weighted voting model
     classfiers_pred = pd.DataFrame({'bert': bert_pred,
@@ -64,9 +44,10 @@ def main(news_file, comments_file,relationship_file):
                                     'lr': lr_pred,
                                     'comment': comment_pred})
 
-    voting_pred, prob = WMVEpredict(weight, classfiers_pred, use_softmax=False, final=True)
+    print('Voting...')
+    voting_pred, _ = WMVEpredict(weight, classfiers_pred, use_softmax=False, final=True)
 
-    binary_eval('voting_val', Y, voting_pred)
+    return voting_pred
 
 def embedding_news(news_df):
     news_df['text_combined'] = news_df['text'] + news_df['title'] * 2
@@ -92,43 +73,22 @@ def embedding_comments(comments_df):
 
     return X, Y, dataloader
 
-def import_data():
-    user = 'postgres'
-    password = 'Komaeda'
+def import_data(news_file, comment_file):
 
-    engine = create_engine('postgresql://'+user+':'+password+'@localhost/news')
+    news_table = pd.read_csv(news_file)
 
-    Query = "SELECT * FROM redditcomment"
-    comment_table = pd.read_sql_query(Query, con=engine)
-    Query = "SELECT title,text,label FROM redditnews"
-    news_table = pd.read_sql_query(Query, con=engine)
-    Query = "SELECT title,text,author,label FROM factcheck"
-    factcheck = pd.read_sql_query(Query, con=engine)
-    Query = "SELECT * FROM topic"
-    topic = pd.read_sql_query(Query, con=engine)
+    if 'label' not in news_table.columns:
+        news_table = news_table.assign(label = [0 for i in range(0,len(news_table))])
 
-    reddit_sample = news_table.sample(n=500, random_state=1)
-    factcheck_sample = factcheck.sample(n=50, random_state=1)
+    news_df = news_table.assign(news_index = [i for i in range(0,len(news_table))])
 
-    # ========================================
-    #             Combine Table
-    # ========================================
-    news = pd.merge(reddit_sample, factcheck_sample,
-                    how='outer',
-                    left_on=['title', 'text', 'label'],
-                    right_on=['title', 'text', 'label']).reset_index(drop=True)
-
-    news_df = pd.merge(news, topic,
-                               how='left',
-                               left_on=['title', 'text'],
-                               right_on=['title', 'text']).reset_index(drop=True)
-
-    news_df = news_df.assign(news_index = [i for i in range(0,len(news_df))])
+    comment_table = pd.read_csv(comment_file)
 
     comments_df = pd.merge(news_df, comment_table,
                            how='left',
                            left_on=['title', 'text'],
                            right_on=['title', 'text']).dropna(subset=['comment_text']).reset_index(drop=True)
+
     comments_df = comments_df.assign(have_comment=[1] * len(comments_df))
 
     news_comments_relationship = comments_df[['news_index', 'have_comment']].drop_duplicates()
@@ -230,5 +190,7 @@ def comments_voting_pred(news_df, comments_df, relationship):
     return result
 
 if __name__ == '__main__':
-    #import_data()
-    main('pred_news.csv','pred_comments.csv','pred_relationship.csv')
+    # Import the news table and comment table 
+    import_data('news_table.csv', 'comment_table.csv')
+    voting_pred = main()
+    print(voting_pred)
