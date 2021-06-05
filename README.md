@@ -42,8 +42,10 @@ Running our whole program is very time-consuming, so we provide a demo with a sm
   **Predicting on New Data**
   
   - **Step 1:** Divide the data into a news table and a comments table and save them as CSV files. The two tables should contain the following columns:
-    - News Table: title, text, label, author, topic, perception
-    - Comment Talbe: title, text, label, comment_author, comment_text, comment_score, comment_subreddit.
+  
+    - News Table: text, title, author, topic, perception
+    
+    - Comment Table: text, title, comment_author, comment_text, comment_score, comment_subreddit
 
   - **Step 2:** Run **prediction.py**.
   
