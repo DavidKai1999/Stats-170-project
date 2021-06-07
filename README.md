@@ -4,7 +4,7 @@ A weighted voting model to do binary classification on the authenticity of the n
 
 ## Running a Demo
 
-Running our whole program is very time-consuming, so we provide a demo with a small sample of data to show how to predict the authenticity of news with our models. To run the demo, please follow the steps:
+Running our whole project is very time-consuming, so we provide a demo with a small sample of data to show how to predict the authenticity of news with our models. To run the demo, please follow the steps:
 
 - **Step 1**: Clone or dowload this repository. 
 - **Step 2**: Make sure the following files exist:
@@ -113,11 +113,11 @@ Running our whole program is very time-consuming, so we provide a demo with a sm
 
 - **WMVE.py**
 
-  This is the script where we implement the weighted majority voting algorithm. It contains the functions for calculaitng voting weights, getting comments voting prediction (the way to do so is explained in our final report), and generating the weighted voting results. 
+  This is the script where we implement the weighted majority voting algorithm. It contains the functions for calculating voting weights, getting comments voting prediction (the way to do so is explained in our final report), and generating the weighted voting results. 
 
 - **evaluation.py**
 
-  This script contains several helper functions for printing model performance's evaluation message.
+  This script contains several helper functions for printing model performance evaluation message.
 
 - **validation.py**
 
