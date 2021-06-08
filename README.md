@@ -37,7 +37,7 @@ Running our whole project is very time-consuming, so we provide a demo with a sm
    
    - Topic Modeling
   
-     Run **Topic Modeling.ipynb** to first import data we saved in PostgreSQL server, then combining the text columns of the two datasets and use the LDA model to do topic modeling. The topic modeling results will also be stored in PostgreSQL server.
+     Run **Topic Modeling.ipynb** to first import data saved in PostgreSQL server, then combining the text columns of the two datasets and use the LDA model to do topic modeling. The topic modeling results will also be stored in PostgreSQL server.
   
   **Training Model**
   
