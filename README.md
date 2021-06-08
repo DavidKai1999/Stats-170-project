@@ -29,7 +29,7 @@ Running our whole project is very time-consuming, so we provide a demo with a sm
   
   - Fact Check Dataset
 
-    Run **factcheck_preprocessing.ipynb** to detect the language of text in each row and remove all rows not in English. Then, run **factcheck_label.ipynb** to convert the labels into binary 0/1 labels, and store the data in PostgreSQL server.
+    Run **factcheck_preprocessing.ipynb** to detect the language of text in each row and remove all rows not in English. Save the cleaned data into a new csv file. Then, run **factcheck_label.ipynb** to convert the labels of cleaned data into binary 0/1 labels, and store the data in PostgreSQL server.
    
    - Reddit Comment Dataset
   
@@ -37,7 +37,7 @@ Running our whole project is very time-consuming, so we provide a demo with a sm
    
    - Topic Modeling
   
-     Run **Topic Modeling.ipynb** to combine the text columns of the two datasets and use the LDA model to do topic modeling. The topic modeling results will also be stored in PostgreSQL server.
+     Run **Topic Modeling.ipynb** to first import data saved in PostgreSQL server, then combining the text columns of the two datasets and use the LDA model to do topic modeling. The topic modeling results will also be stored in PostgreSQL server.
   
   **Training Model**
   
