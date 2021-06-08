@@ -19,9 +19,25 @@ Running our whole project is very time-consuming, so we provide a demo with a sm
 
 ## Running the Project
 
-  Here we introduce the complete process of training models, evaluating models, and predicting new data by the program. Before running the code, all the data have been cleaned and done with topic modeling. Both the data and the topic modeling results have been stored in the PostgreSQL server. 
+  Here we introduce the complete process of cleaning data, training models, evaluating models, and predicting new data by the program.
   
   Also, notice that we split the data into 6 folds and use a parameter called k_index in **Config.py** to control the fold used as the validation set. We use different k_index to run on multiple computers for doing cross-validation.
+  
+  **Cleaning Data & Topic Modeling**
+  
+  All the scripts for data cleaning and wrangling are under the **data_preprocess** folder.
+  
+  - Fact Check Dataset
+
+    Run **factcheck_preprocessing.ipynb** to detect the language of text in each row and remove all rows not in English. Then, run **factcheck_label.ipynb** to convert the labels into binary 0/1 labels, and store the data in PostgreSQL server.
+   
+   - Reddit Comment Dataset
+  
+     Run **redditcomment_preprocess.ipynb** to transform the dataset into 1NF, and split it into the news table and comment table to store in PostgreSQL server.
+   
+   - Topic Modeling
+  
+     Run **Topic Modeling.ipynb** to combine the text columns of the two dataset and use the LDA model to do topic modeling. The topic modeling results will also be stored in PostgreSQL server.
   
   **Training Model**
   
